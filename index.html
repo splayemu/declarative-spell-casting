@@ -13,6 +13,39 @@ function log(msg) {
 }
 
 /* game components */
+Crafty.c("Player", {
+	init: function() {
+		//this.color(this.color);
+		this.bind("mousemove") {
+		//	if(parent_id == this) {
+		//		this.mana -= manacost;
+		//	}
+			log("Mana: " + this.mana);
+		});
+	},
+	
+	// constructor for the player
+	// Mana - the player will have a static amount of mana that is used to cast spells. 
+	//	      When mana reaches 0, all of his/her spells disappear
+	// Mana Regeneration - how much mana will regen per game tick
+	// Spells - all the active spells this player has cast
+	player: function(mana, mana_regeneration) {
+		this.mana = mana;
+		this.mana_regeneration = mana_regeneration;
+		this.spells = {};
+		log("Mana " + this.mana);
+		// "spellcast" gets triggered every time this player casts a spell
+		// 		- Reduces the current mana of the player
+		//		- 
+
+		return this;
+	}
+
+});
+
+
+
+/* game components */
 Crafty.c("Projectile", {
 	init: function() {
 		this.requires('2D');
@@ -46,18 +79,17 @@ Crafty.c("Projectile", {
 
 Crafty.c("Spell", {
 	init: function() {
-		this.bind('EnterFrame', function () {
-			// 
-		})
+		this.trigger("spellcast");
+		//log("initializing the spell");
 	},
 	
 	// constructor for spell
-	spell: function(name, parent) {
+	spell: function(name, parent, mana_cost) {
 		this.name = name;
 		this.parent = parent;
+		this.mana_cost = mana_cost;
 		return this;
-	}
-
+	},
 });
 /* end game components */
 
@@ -129,22 +161,36 @@ Syn_node.prototype.toString = function() {
 /* end of syn_node */
 
 /* data structure to hold the properties of the entities */
+// Changing it to consist of an entity hash
+// {  entity_name : [ component_table ]  }
 function entity_storage () {
-	this.component_list = new Array();
+	this.entities = new Array;
 };
 
-entity_storage.prototype.push = function(new_component) {
+/*entity.prototype.new_entity = function(name, entity) {
+	this.entities.push(name);
+}*/
+
+function entity () {
+	this.name = '';
+	this.component_list = new Array();
+};
+// 
+entity.prototype.new_entity = function(name) {
+	this.name = name;
+}
+
+entity.prototype.push_component = function(new_component) {
 	this.component_list.push(new_component);
 }
 
-entity_storage.prototype.get_component_string = function() {
+entity.prototype.get_component_string = function() {
 	var str = '';
 	for(var i = 0; i < this.component_list.length; i++) {
 		str += this.component_list[i][0] + ','
 	}
 	return str;
 }
-
 
 /* */
 
@@ -382,9 +428,10 @@ function rec_traverse_grammar_tree(spell_root, component_list) {
 		my_y = getMyY();
 		var speed = 3;
 		var direction = Math.atan2(mousepos_x - my_x, mousepos_y - my_y );
-		Crafty.e("2D, DOM, Collision, Projectile, Color")
+		Crafty.e("2D, DOM, Collision, Projectile, Color, Spell")
 			.projectile(8, my_x, my_y , direction, speed)
 			.color('rgb(255,10,10)')
+			.spell('Fireball', player1)
 		break;
 		
 	// Move - TOK_MOVE
@@ -465,20 +512,31 @@ function init() {
 		//.text("(0,0)");
 	
 	//Main character
-	var player1 = Crafty.e("Player1, 2D, DOM, Color, Keyboard, Multiway")
+	var player1 = Crafty.e("Player, Player1, 2D, DOM, Color, Keyboard, Multiway")
+		.player(100,0)
 		.color('rgb(0,255,0)')
 		.attr({ x: 300, y: 150, w: 25, h: 25 })
 		.multiway(4, {W: -90, S: 90, D: 0, A: 180})
 		.bind("KeyDown", function(e) {
 			if (this.isDown('SPACE')) {
-				traverse_grammar_tree(root_node);
-					//var speed = 3;
-					//var direction = Math.atan2(mousepos._x - this._x, mousepos._y - this._y);
-					//Crafty.e("2D, DOM, Collision, Projectile")
-					//	.projectile('rgb(255,0,150)', 8, this._x, this._y, direction, speed)
+				//traverse_grammar_tree(root_node);
+				mousepos_x = getMouseX();
+				mousepos_y = getMouseY();
+				my_x = getMyX();
+				my_y = getMyY();
+				var speed = 3;
+				var direction = Math.atan2(mousepos_x - my_x, mousepos_y - my_y );
+				Crafty.e("2D, DOM, Collision, Projectile, Color, Spell")
+					.projectile(8, my_x, my_y , direction, speed)
+					.color('rgb(255,10,10)')
+					.spell("fireball", this, 10)
 			}
 		});
 
+	Crafty.addEvent(this, "spellcast", function(e) {
+		log("spell is cast");
+	});
+		
 	Crafty.addEvent(this, "mousemove", function(e) {
 		var pos = Crafty.DOM.translate(e.clientX, e.clientY);	
 		//var direction = (Math.atan2(e.clientY - player1._y, e.clientX - player1._x));
@@ -487,15 +545,13 @@ function init() {
 		mousepos.attr({ x: e.clientX , y: e.clientY, w: 100, h: 20 }); 
 		//me.rotation = ~~(Math.atan2(pos.y - me._y, pos.x - me._x) * (180 / Math.PI)) + 90;
 	});
+	
+
 		
 };
 
 init()
-//FireBall
-//Crafty.e("2D, DOM, Collision, Projectile")
-//	.projectile('rgb(255,0,150)', 25, 1, -1)
 
-	
 
 	</script>
 </body>
