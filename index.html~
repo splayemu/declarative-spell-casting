@@ -91,11 +91,11 @@ Crafty.c("Projectile", {
 Crafty.c("Spell", {
 	init: function() {
 		log("initializing the spell");
-		this.bind('Spellcast', function(params) {
+		this.bind('Spellcast', function(player, manacost) {
 		//	if(e.parent_id == this) {
 		//		this.mana -= e.manacost;
 		//	}
-			log("Player: " + params[0] + " uses " + params[1] + " mana");
+			log("Player: " + player + " uses " + manacost + " mana");
 		});
 		//player.trigger("Cast", manacost);
 
