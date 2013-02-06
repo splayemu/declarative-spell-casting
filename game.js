@@ -1,0 +1,260 @@
+$(document).ready(function() {
+	// quick fix to log messages
+	function log(msg) {
+		setTimeout(function() {
+			throw new Error(msg);
+		}, 0);
+	}
+
+	// Generic object size
+	Object.size = function(obj) {
+		var size = 0, key;
+		for (key in obj) {
+			if (obj.hasOwnProperty(key)) size++;
+		}
+		return size;
+	};
+
+	//Crafty.c("YourComponent", {      
+	//	init: function(){            
+	//		this.bind("MyEvent",function(args){                  
+	//			do something;  
+	//          	});      
+	//	}}); 
+	//Crafty.e("YourComponent").trigger("MyEvent",args); 
+
+
+	//var destroy_spells = function () {
+
+
+	//}
+
+	/* game components */
+	Crafty.c("PlayerManager", {
+		init: function() {
+			this.bind('EnterFrame', function () {
+				/* Game tick for player 
+					- Increment Mana
+					- Recieve manacost input from spells
+					- If cost of executing spells > 0, all spells are destroyed
+				
+				*/
+				// increment mana
+				if(this.mana + this.mana_regen <= 100) {
+					this.mana += this.mana_regen;
+					manabar.trigger("ChangeMana", this.mana);
+					//log("Current Mana: " + this.mana);
+				}
+				if(this.mana <= 0 && Object.size(this.spells) != 0) {
+					log("Destroying spells");
+					// THIS DOES NOT WORK. It seems that it is not quite destroying the spell
+					// CURRENTLY - this does not get activated
+					for(spell_id in this.spells) {
+						Crafty(spell_id).destroy();
+						log("Destroying " + spell_id);
+						delete this.spells[spell_id];
+					}
+				}
+			});
+			/* Cast - Will be functionized. Casts a spell
+				Preconditions: player.mana - spell.manacost > 0
+				Postconditions: spell is cast
+			*/
+			this.bind('Cast', function(params) {
+				//manabar = params[0];
+				var id = params[0];
+				var name = params[1];
+				var manacost = params[2];
+				var direction = params[3];
+				var speed = params[4];
+				
+				var my_x = getMyX();
+				var my_y = getMyY();
+				
+				// checks to make sure the spell can be cast
+				if(this.mana - manacost > 0) {
+					this.mana -= manacost;
+					manabar.trigger("ChangeMana", this.mana);
+					this.spells[id] = name;
+					log("Player casts: " + this.spells[id] + " at the manacost: " + manacost);
+					Crafty.e("2D, DOM, Collision, Projectile, Color")
+						.projectile(8, my_x, my_y , direction, speed)
+						.color('rgb(255,10,10)')
+				}
+				else if(this.mana - manacost <= 0) {
+					Crafty(id).destroy();
+					log("Not enough mana to cast " + id);
+				
+				}
+			});
+			//});
+		},
+		
+		// constructor for the player
+		// Mana - the player will have a static amount of mana that is used to cast spells. 
+		//	      When mana reaches 0, all of his/her spells disappear
+		// Mana Regen - how much mana will regen per game tick
+		// Spells - all the active spells this player has cast
+		playermanager: function(mana, mana_regen) {
+			this.mana = mana;
+			this.mana_regen = mana_regen;
+			this.spells = {};
+			log("Mana " + this.mana);
+			// "spellcast" gets triggered every time this player casts a spell
+			// 		- Reduces the current mana of the player
+			//		- 
+
+			return this;
+		}
+
+	});
+
+
+
+	/* game components */
+	Crafty.c("Projectile", {
+		init: function() {
+			this.requires('2D');
+			this.requires('Collision');
+			//this.color(this.color);
+		},
+		
+		// constructor for the projectile
+		projectile: function(size, xStartingPos, yStartingPos, direction, speed) {
+			this.attr({ x: xStartingPos, y: yStartingPos, w: size, h: size, 
+				dX: Math.sin(direction) * speed, //Crafty.math.randomInt(2, 5) * xSpeed, 
+				dY: Math.cos(direction) * speed}) //Crafty.math.randomInt(2, 5) * ySpeed})
+			.bind('EnterFrame', function () {
+				//hit floor or roof
+				if (this.y <= 0 || this.y >= 290)
+					this.destroy();
+
+				if (this.x <= 0 || this.x >= 590)
+					this.destroy();
+
+				this.x += this.dX;
+				this.y += this.dY;
+			})
+			//.onHit('Player1', function () {
+			//	this.dX *= -1;
+			//})
+			return this;
+		}
+
+	});
+
+
+	/*
+	Crafty.c("Spell", {
+		init: function() {
+			log("initializing the spell");
+			this.bind('Spellcast', function(params) {
+			//	if(e.parent_id == this) {
+			//		this.mana -= e.manacost;
+			//	}
+				log("Player: " + params[0] + " uses " + params[1] + " mana");
+			});
+			//player.trigger("Cast", manacost);
+
+		},
+		
+		// constructor for spell
+		spell: function(name, parent, mana_cost) {
+			log("constructing the spell");
+			this.name = name;
+			this.parent = parent;
+			this.mana_cost = mana_cost;
+			return this;
+		},
+	}); */
+	/* end game components */
+
+
+	/* general purpose global functions */
+	// need getters for the mouse position and player position
+	function getMouseX() {
+		var mousepos = Crafty("MousePos");
+		return mousepos._x;
+	}
+
+	function getMouseY() {
+		var mousepos = Crafty("MousePos");
+		return mousepos._y;
+	}
+
+	function getMyX() {
+		var player1 = Crafty("Player1");
+		return player1._x;
+	}
+
+	function getMyY() {
+		var player1 = Crafty("Player1");
+		return player1._y;
+	}
+	/* end general purpose global functions */
+
+
+	var fireball = function(wizard) {
+
+		var mousepos_x = getMouseX();
+		var mousepos_y = getMouseY();
+		var my_x = getMyX();
+		var my_y = getMyY();
+		var speed = 3;
+		var direction = Math.atan2(mousepos_x - my_x, mousepos_y - my_y );
+		
+		var params = [5, "fireball", 10, direction, speed];	
+		wizard.trigger("Cast", params);
+	}
+
+	function init() {
+		Crafty.init(600, 300);
+		Crafty.background('rgb(127,127,127)');	
+		
+		var mousepos = Crafty.e("MousePos, DOM, 2D, Text")
+			.attr({ x: 20, y: 20, w: 100, h: 20 })
+			//.text("(0,0)");
+		
+		/* Manabar - should move to a component probably
+			- The event to change the mana is 'ChangeMana' which accepts an int */
+		Crafty.e("ManabarBack, DOM, 2D, Color")
+			.attr({ x: 5, y: 5, w: 102, h: 10, dX: 0, dY: 0})
+			.color('rgb(0,0,0)')
+
+		manabar = Crafty.e("Manabar, DOM, 2D, Color")
+			.attr({ x: 6, y: 6, w: 100, h: 8, dX: 0, dY: 0})
+			.color('rgb(0,0,255)')
+			.bind("ChangeMana", function(current_mana) {
+				log("Mana will be changed to " + current_mana );
+				this.w = current_mana;
+			})
+			
+		//Main character
+		var player1 = Crafty.e("Player1, PlayerManager, 2D, DOM, Color, Keyboard, Multiway")
+			.playermanager(100,10)
+			.color('rgb(0,255,0)')
+			.attr({ x: 300, y: 150, w: 25, h: 25 })
+			.multiway(4, {W: -90, S: 90, D: 0, A: 180})
+			.bind("KeyDown", function(e) {
+				if (this.isDown('SPACE')) {
+					for(var i = 0; i < 10; i++) {
+						fireball(this);
+					}
+				}
+			});
+			
+		Crafty.addEvent(this, "mousemove", function(e) {
+			//var pos = Crafty.DOM.translate(e.clientX, e.clientY);	
+			//var direction = (Math.atan2(e.clientY - player1._y, e.clientX - player1._x));
+			//mousepos.text("(" + Math.cos(direction) + "," + Math.sin(direction) + ")");
+			//mousepos.text("(" + direction + ")");
+			mousepos.attr({ x: e.clientX , y: e.clientY, w: 100, h: 20 }); 
+			//me.rotation = ~~(Math.atan2(pos.y - me._y, pos.x - me._x) * (180 / Math.PI)) + 90;
+		});
+		
+
+			
+	};
+
+	init()
+});
