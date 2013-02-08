@@ -29,22 +29,38 @@ $(document).ready(function() {
 
 	//}
 
+	var accelerate = function () {
+		
+	
+	
+	}
+	
 	/* game components */
 	Crafty.c("PlayerManager", {
 		init: function() {
 			this.bind('EnterFrame', function () {
+				/* Things to do
+					- 
+					
+				*/
 				/* Game tick for player 
 					- Increment Mana
-					- Recieve manacost input from spells
+					- push all actions on the queue
+					- shift action off the queue
+					- calculate mana_cost of that action and all current spells
 					- If cost of executing spells > 0, all spells are destroyed
 				
 				*/
 				// increment mana
-				if(this.mana + this.mana_regen <= 100) {
-					this.mana += this.mana_regen;
-					manabar.trigger("ChangeMana", this.mana);
+				this.mana += this.mana_regen;
+				if(this.mana + this.mana_regen > this.maximum_mana) {
 					//log("Current Mana: " + this.mana);
+					this.mana = this.maximum_mana;
 				}
+				// update manabar
+				//if(this.mana != this.maximum_mana)
+					manabar.trigger("ChangeMana", this.mana);
+				// calculate mana_cost of active spells
 				if(this.mana <= 0 && Object.size(this.spells) != 0) {
 					log("Destroying spells");
 					// THIS DOES NOT WORK. It seems that it is not quite destroying the spell
@@ -64,7 +80,7 @@ $(document).ready(function() {
 				//manabar = params[0];
 				var id = params[0];
 				var name = params[1];
-				var manacost = params[2];
+				var mana_cost = params[2];
 				var direction = params[3];
 				var speed = params[4];
 				
@@ -72,16 +88,18 @@ $(document).ready(function() {
 				var my_y = getMyY();
 				
 				// checks to make sure the spell can be cast
-				if(this.mana - manacost > 0) {
-					this.mana -= manacost;
+				if(this.mana - mana_cost > 0) {
+					this.mana -= mana_cost;
 					manabar.trigger("ChangeMana", this.mana);
 					this.spells[id] = name;
-					log("Player casts: " + this.spells[id] + " at the manacost: " + manacost);
-					Crafty.e("2D, DOM, Collision, Projectile, Color")
-						.projectile(8, my_x, my_y , direction, speed)
-						.color('rgb(255,10,10)')
+					var spell = Crafty.e("2D, DOM, Collision, PhysicalSpell, Spell")
+						.physicalspell(8, my_x, my_y, 'rgb(255,10,10)')
+						//.projectile(8, my_x, my_y , direction, speed)
+						//.color('rgb(255,10,10)')
+						.spell(name, mana_cost);
+					log("Player casts: " + spell[0] + " at the manacost: " + mana_cost);
 				}
-				else if(this.mana - manacost <= 0) {
+				else if(this.mana - mana_cost <= 0) {
 					Crafty(id).destroy();
 					log("Not enough mana to cast " + id);
 				
@@ -95,8 +113,10 @@ $(document).ready(function() {
 		//	      When mana reaches 0, all of his/her spells disappear
 		// Mana Regen - how much mana will regen per game tick
 		// Spells - all the active spells this player has cast
-		playermanager: function(mana, mana_regen) {
-			this.mana = mana;
+		// Actions - a queue for storing the spells a player has to cast
+		playermanager: function(maximum_mana, mana_regen) {
+			this.maximum_mana = maximum_mana;
+			this.mana = 0;
 			this.mana_regen = mana_regen;
 			this.spells = {};
 			log("Mana " + this.mana);
@@ -142,31 +162,50 @@ $(document).ready(function() {
 		}
 
 	});
+	
+	Crafty.c("PhysicalSpell", {
+		init: function() {
+			this.requires('2D');
+			this.requires('Collision');
+			this.requires('Color');
+		},
+		
+		// constructor for the projectile
+		physicalspell: function(size, xStartingPos, yStartingPos, color) {
+			this.attr({ x: xStartingPos, y: yStartingPos, w: size, h: size, dX: 0, dY: 0 })
+			.color(color)
+			.bind('EnterFrame', function () {
+				//hit floor or roof
+				if (this.y <= 0 || this.y >= 290)
+					this.destroy();
+
+				if (this.x <= 0 || this.x >= 590)
+					this.destroy();
+
+				this.x += this.dX;
+				this.y += this.dY;
+			})
+			return this;
+		}
+
+	});
 
 
-	/*
+	
 	Crafty.c("Spell", {
 		init: function() {
-			log("initializing the spell");
-			this.bind('Spellcast', function(params) {
-			//	if(e.parent_id == this) {
-			//		this.mana -= e.manacost;
-			//	}
-				log("Player: " + params[0] + " uses " + params[1] + " mana");
-			});
-			//player.trigger("Cast", manacost);
-
+			//log("init spell.");
 		},
 		
 		// constructor for spell
-		spell: function(name, parent, mana_cost) {
-			log("constructing the spell");
+		spell: function(name, mana_cost) {
 			this.name = name;
-			this.parent = parent;
+			//this.parent = parent;
 			this.mana_cost = mana_cost;
+			log(this.name + " costs " + this.mana_cost + " mana.");
 			return this;
 		},
-	}); */
+	}); 
 	/* end game components */
 
 
@@ -194,19 +233,28 @@ $(document).ready(function() {
 	/* end general purpose global functions */
 
 
-	var fireball = function(wizard) {
+	var fireball = function(wizard, direction) {
 
 		var mousepos_x = getMouseX();
 		var mousepos_y = getMouseY();
 		var my_x = getMyX();
 		var my_y = getMyY();
 		var speed = 3;
-		var direction = Math.atan2(mousepos_x - my_x, mousepos_y - my_y );
+		//var direction = Math.atan2(mousepos_x - my_x, mousepos_y - my_y );
 		
-		var params = [5, "fireball", 10, direction, speed];	
+		var params = [5, "fireball", 1, direction, speed];	
 		wizard.trigger("Cast", params);
 	}
 
+	var ball = function(wizard) {
+		var my_x = getMyX();
+		var my_y = getMyY();
+		
+		var params = [5, "ball", 1, 0, 0];	
+		wizard.trigger("Cast", params);
+	}
+
+	
 	function init() {
 		Crafty.init(600, 300);
 		Crafty.background('rgb(127,127,127)');	
@@ -225,21 +273,22 @@ $(document).ready(function() {
 			.attr({ x: 6, y: 6, w: 100, h: 8, dX: 0, dY: 0})
 			.color('rgb(0,0,255)')
 			.bind("ChangeMana", function(current_mana) {
-				log("Mana will be changed to " + current_mana );
+				//log("Mana will be changed to " + current_mana );
 				this.w = current_mana;
 			})
 			
 		//Main character
 		var player1 = Crafty.e("Player1, PlayerManager, 2D, DOM, Color, Keyboard, Multiway")
-			.playermanager(100,10)
+			.playermanager(100,5)
 			.color('rgb(0,255,0)')
 			.attr({ x: 300, y: 150, w: 25, h: 25 })
 			.multiway(4, {W: -90, S: 90, D: 0, A: 180})
 			.bind("KeyDown", function(e) {
 				if (this.isDown('SPACE')) {
-					for(var i = 0; i < 10; i++) {
-						fireball(this);
-					}
+					//for(var i = 0; i < 360; i++) {
+					//	fireball(this, i);
+					//}
+					ball(this);
 				}
 			});
 			
