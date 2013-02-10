@@ -29,10 +29,16 @@ $(document).ready(function() {
 
 	//}
 
-	var accelerate = function () {
-		
-	
-	
+	var accelerate = function (spell_id) {
+		var mousepos_x = getMouseX();
+		var mousepos_y = getMouseY();
+		var my_x = getMyX();
+		var my_y = getMyY();
+		var speed = 3;
+		var direction = Math.atan2(mousepos_x - my_x, mousepos_y - my_y);
+		var params = [direction, speed];
+		Crafty(spell_id).trigger("Echo").trigger("Accelerate", params);
+		//Crafty(spell_id)._attr({dX: 10, dY: 0 });
 	}
 	
 	/* game components */
@@ -98,6 +104,7 @@ $(document).ready(function() {
 						//.color('rgb(255,10,10)')
 						.spell(name, mana_cost);
 					log("Player casts: " + spell[0] + " at the manacost: " + mana_cost);
+					accelerate(spell[0]);
 				}
 				else if(this.mana - mana_cost <= 0) {
 					Crafty(id).destroy();
@@ -168,6 +175,12 @@ $(document).ready(function() {
 			this.requires('2D');
 			this.requires('Collision');
 			this.requires('Color');
+			this.bind('Accelerate', function(params) {
+				var dX = Math.sin(params[0]) * params[1];
+				var dY = Math.cos(params[0]) * params[1];
+				log("Accelerating dX: " + dX + " dY: " + dY);
+				this.attr({ dX: dX, dY: dY });
+			});
 		},
 		
 		// constructor for the projectile
@@ -194,7 +207,10 @@ $(document).ready(function() {
 	
 	Crafty.c("Spell", {
 		init: function() {
-			//log("init spell.");
+			//log("Id is: " + this.each());
+			this.bind('Echo', function() {
+				log(this.name + " says hi.");
+			});
 		},
 		
 		// constructor for spell
