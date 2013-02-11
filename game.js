@@ -15,20 +15,27 @@ $(document).ready(function() {
 		return size;
 	};
 
-	//Crafty.c("YourComponent", {      
-	//	init: function(){            
-	//		this.bind("MyEvent",function(args){                  
-	//			do something;  
-	//          	});      
-	//	}}); 
-	//Crafty.e("YourComponent").trigger("MyEvent",args); 
 
-
-	//var destroy_spells = function () {
-
-
-	//}
-
+	/* Library calls 
+	 * These are the base functions that manipulate the game world.
+	 * Deriving manacost - 
+	 *
+	 *
+	 **/
+	/* Shape - creates a movable spell of a certain size and color
+	 * Parameters:
+	 *	element - the element (color) of the spell
+	 *	size 	- the size of the element
+	 * Manacost: 2 * size
+	 * Output: returns the entity created
+	 */
+	var shape		= function (element, size) {
+		var spell = Crafty.e("2D, DOM, Collision, PhysicalSpell, Spell")
+			.physicalspell(size, getMyX(), getMyY(), 'rgb(255,10,10)')
+			.spell(name, 2 * size);	
+		return spell;
+	}
+	
 	var accelerate = function (spell_id) {
 		var mousepos_x = getMouseX();
 		var mousepos_y = getMouseY();
@@ -40,6 +47,7 @@ $(document).ready(function() {
 		Crafty(spell_id).trigger("Echo").trigger("Accelerate", params);
 		//Crafty(spell_id)._attr({dX: 10, dY: 0 });
 	}
+	/* End of Library calls */
 	
 	/* game components */
 	Crafty.c("PlayerManager", {
@@ -98,11 +106,7 @@ $(document).ready(function() {
 					this.mana -= mana_cost;
 					manabar.trigger("ChangeMana", this.mana);
 					this.spells[id] = name;
-					var spell = Crafty.e("2D, DOM, Collision, PhysicalSpell, Spell")
-						.physicalspell(8, my_x, my_y, 'rgb(255,10,10)')
-						//.projectile(8, my_x, my_y , direction, speed)
-						//.color('rgb(255,10,10)')
-						.spell(name, mana_cost);
+					var spell = shape("fire", 8);
 					log("Player casts: " + spell[0] + " at the manacost: " + mana_cost);
 					accelerate(spell[0]);
 				}
