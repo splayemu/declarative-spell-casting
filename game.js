@@ -22,7 +22,7 @@ $(document).ready(function() {
 	 *
 	 *
 	 **/
-	/* Shape - creates a movable spell of a certain size and color
+	/* shape - creates a movable spell of a certain size and color
 	 * Parameters:
 	 *	element - the element (color) of the spell
 	 *	size 	- the size of the element
@@ -32,20 +32,19 @@ $(document).ready(function() {
 	var shape		= function (element, size) {
 		var spell = Crafty.e("2D, DOM, Collision, PhysicalSpell, Spell")
 			.physicalspell(size, getMyX(), getMyY(), 'rgb(255,10,10)')
-			.spell(name, 2 * size);	
+			.spell("Shape", 2 * size);	
 		return spell;
 	}
-	
-	var accelerate = function (spell_id) {
-		var mousepos_x = getMouseX();
-		var mousepos_y = getMouseY();
-		var my_x = getMyX();
-		var my_y = getMyY();
-		var speed = 3;
-		var direction = Math.atan2(mousepos_x - my_x, mousepos_y - my_y);
-		var params = [direction, speed];
-		Crafty(spell_id).trigger("Echo").trigger("Accelerate", params);
-		//Crafty(spell_id)._attr({dX: 10, dY: 0 });
+	/* accelerate - adds acceleration to a movable spell
+	 * Parameters:
+	 *	spell_id 	- the id for the spell
+	 *	direction 	- the direction of the acceleration
+	 *	amount	 	- the amount of acceleration
+	 * Manacost: amount * size (of entity)
+	 * Output: in game effects
+	 */	
+	var accelerate 		= function (spell_id, direction, amount) {
+		Crafty(spell_id).accelerate(direction, amount);
 	}
 	/* End of Library calls */
 	
@@ -59,30 +58,24 @@ $(document).ready(function() {
 				*/
 				/* Game tick for player 
 					- Increment Mana
-					- push all actions on the queue
-					- shift action off the queue
-					- calculate mana_cost of that action and all current spells
+					- evaluate/calc manacost (RTSI) for each spell
+					- total_manacost = add up the mana cost of the current spells
+					- Decrement Mana with total_manacost
 					- If cost of executing spells > 0, all spells are destroyed
 				
 				*/
 				// increment mana
-				this.mana += this.mana_regen;
-				if(this.mana + this.mana_regen > this.maximum_mana) {
-					//log("Current Mana: " + this.mana);
-					this.mana = this.maximum_mana;
-				}
-				// update manabar
-				//if(this.mana != this.maximum_mana)
-					manabar.trigger("ChangeMana", this.mana);
+				this.incrementMana(manabar);
+
 				// calculate mana_cost of active spells
-				if(this.mana <= 0 && Object.size(this.spells) != 0) {
+				if(this.mana <= 0 && Object.size(this.active_spells) != 0) {
 					log("Destroying spells");
 					// THIS DOES NOT WORK. It seems that it is not quite destroying the spell
 					// CURRENTLY - this does not get activated
-					for(spell_id in this.spells) {
+					for(spell_id in this.active_spells) {
 						Crafty(spell_id).destroy();
 						log("Destroying " + spell_id);
-						delete this.spells[spell_id];
+						delete this.active_spells[spell_id];
 					}
 				}
 			});
@@ -100,21 +93,29 @@ $(document).ready(function() {
 				
 				var my_x = getMyX();
 				var my_y = getMyY();
-				
+
+				//this.mana -= mana_cost;
+				//manabar.trigger("ChangeMana", this.mana);
+				this.active_spells[id] = name;
+				var spell = shape("fire", 8);
+				log("Player casts: " + spell[0] + " at the manacost: " + spell.getManaCost());
+				this.decrementMana(manabar, spell.getManaCost());
+
+				//accelerate(spell[0], 0, 1);			
 				// checks to make sure the spell can be cast
-				if(this.mana - mana_cost > 0) {
+				/*if(this.mana - mana_cost > 0) {
 					this.mana -= mana_cost;
 					manabar.trigger("ChangeMana", this.mana);
-					this.spells[id] = name;
+					this.active_spells[id] = name;
 					var spell = shape("fire", 8);
 					log("Player casts: " + spell[0] + " at the manacost: " + mana_cost);
 					accelerate(spell[0]);
-				}
-				else if(this.mana - mana_cost <= 0) {
+				}*/
+				/*else if(this.mana - mana_cost <= 0) {
 					Crafty(id).destroy();
 					log("Not enough mana to cast " + id);
 				
-				}
+				}*/
 			});
 			//});
 		},
@@ -123,19 +124,36 @@ $(document).ready(function() {
 		// Mana - the player will have a static amount of mana that is used to cast spells. 
 		//	      When mana reaches 0, all of his/her spells disappear
 		// Mana Regen - how much mana will regen per game tick
-		// Spells - all the active spells this player has cast
+		// active_spells - all the active spells this player has cast
+		// spell_book - symbol table for spells
 		// Actions - a queue for storing the spells a player has to cast
 		playermanager: function(maximum_mana, mana_regen) {
 			this.maximum_mana = maximum_mana;
 			this.mana = 0;
 			this.mana_regen = mana_regen;
-			this.spells = {};
+			this.active_spells = {};
+			this.spell_book = {};
 			log("Mana " + this.mana);
 			// "spellcast" gets triggered every time this player casts a spell
 			// 		- Reduces the current mana of the player
 			//		- 
 
 			return this;
+		},
+		incrementMana: function(manabar) {
+			this.mana += this.mana_regen;
+			if(this.mana + this.mana_regen > this.maximum_mana) {
+				this.mana = this.maximum_mana;
+			}
+			log("Current Mana: " + this.mana);
+			// update manabar
+			//if(this.mana != this.maximum_mana)
+			manabar.trigger("ChangeMana", this.mana);
+		},
+		decrementMana: function(manabar, mana_cost) {
+			this.mana -= mana_cost;
+			// update manabar
+			manabar.trigger("ChangeMana", this.mana);
 		}
 
 	});
@@ -179,12 +197,10 @@ $(document).ready(function() {
 			this.requires('2D');
 			this.requires('Collision');
 			this.requires('Color');
+			/* Unused now
 			this.bind('Accelerate', function(params) {
-				var dX = Math.sin(params[0]) * params[1];
-				var dY = Math.cos(params[0]) * params[1];
-				log("Accelerating dX: " + dX + " dY: " + dY);
-				this.attr({ dX: dX, dY: dY });
-			});
+				this.accelerate(params[0], params[1]);
+			}); */
 		},
 		
 		// constructor for the projectile
@@ -203,6 +219,12 @@ $(document).ready(function() {
 				this.y += this.dY;
 			})
 			return this;
+		},
+		accelerate: function(direction, speed) {
+				var dX = Math.sin(direction) * speed;
+				var dY = Math.cos(direction) * speed;
+				log("Accelerating dX: " + dX + " dY: " + dY);
+				this.attr({ dX: dX, dY: dY });
 		}
 
 	});
@@ -224,6 +246,9 @@ $(document).ready(function() {
 			this.mana_cost = mana_cost;
 			log(this.name + " costs " + this.mana_cost + " mana.");
 			return this;
+		},
+		getManaCost: function() {
+			return this.mana_cost;
 		},
 	}); 
 	/* end game components */
@@ -253,17 +278,18 @@ $(document).ready(function() {
 	/* end general purpose global functions */
 
 
-	var fireball = function(wizard, direction) {
-
+	var fireball = function(wizard) {
 		var mousepos_x = getMouseX();
 		var mousepos_y = getMouseY();
 		var my_x = getMyX();
 		var my_y = getMyY();
 		var speed = 3;
-		//var direction = Math.atan2(mousepos_x - my_x, mousepos_y - my_y );
+		var direction = Math.atan2(mousepos_x - my_x, mousepos_y - my_y);
+		var spell = shape("fire",8);
+		//accelerate(spell[0], direction, speed);
 		
-		var params = [5, "fireball", 1, direction, speed];	
-		wizard.trigger("Cast", params);
+		//var params = [5, "fireball", 1, direction, speed];	
+		//wizard.trigger("Cast", params);
 	}
 
 	var ball = function(wizard) {
