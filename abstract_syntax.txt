@@ -1,0 +1,25 @@
+Abstract Syntax of: Yer a Wizard, The language.
+
+This document is a description of the abstract syntax.
+
+assign			::= name argumentnames = sequence
+
+argumentnames	::= ident
+				| argumentnames ident
+
+sequence 		::= spell
+				| sequence, spell
+
+spell 			::= identifier arguments
+				| (spell)
+
+arguments		::= argument
+				| arguments argument
+			
+argument		::= expr
+
+expr			::= expr Op expr
+				| True | False
+				| Int
+				| Float
+				| void

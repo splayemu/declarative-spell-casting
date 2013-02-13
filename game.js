@@ -73,9 +73,10 @@ $(document).ready(function() {
 					// THIS DOES NOT WORK. It seems that it is not quite destroying the spell
 					// CURRENTLY - this does not get activated
 					for(spell_id in this.active_spells) {
-						Crafty(spell_id).destroy();
-						log("Destroying " + spell_id);
-						delete this.active_spells[spell_id];
+						Crafty("Spell").each(function() { this.destroy() } );
+					//	var name = Crafty(spell_id).getName();
+					//	log("Destroying id: " + spell_id + " with the name: " + name);
+					//	delete this.active_spells[spell_id];
 					}
 				}
 			});
@@ -96,10 +97,11 @@ $(document).ready(function() {
 
 				//this.mana -= mana_cost;
 				//manabar.trigger("ChangeMana", this.mana);
-				this.active_spells[id] = name;
 				var spell = shape("fire", 8);
+				this.active_spells[spell[0]] = spell.getName();
 				log("Player casts: " + spell[0] + " at the manacost: " + spell.getManaCost());
 				this.decrementMana(manabar, spell.getManaCost());
+				//Crafty(spell[0]).destroy();
 
 				//accelerate(spell[0], 0, 1);			
 				// checks to make sure the spell can be cast
@@ -145,7 +147,7 @@ $(document).ready(function() {
 			if(this.mana + this.mana_regen > this.maximum_mana) {
 				this.mana = this.maximum_mana;
 			}
-			log("Current Mana: " + this.mana);
+			// log("Current Mana: " + this.mana);
 			// update manabar
 			//if(this.mana != this.maximum_mana)
 			manabar.trigger("ChangeMana", this.mana);
@@ -157,7 +159,6 @@ $(document).ready(function() {
 		}
 
 	});
-
 
 
 	/* game components */
@@ -225,6 +226,9 @@ $(document).ready(function() {
 				var dY = Math.cos(direction) * speed;
 				log("Accelerating dX: " + dX + " dY: " + dY);
 				this.attr({ dX: dX, dY: dY });
+		},
+		selfDestruct: function() {
+			this.destroy();
 		}
 
 	});
@@ -249,6 +253,9 @@ $(document).ready(function() {
 		},
 		getManaCost: function() {
 			return this.mana_cost;
+		},
+		getName: function() {
+			return this.name;
 		},
 	}); 
 	/* end game components */
@@ -320,12 +327,15 @@ $(document).ready(function() {
 			.color('rgb(0,0,255)')
 			.bind("ChangeMana", function(current_mana) {
 				//log("Mana will be changed to " + current_mana );
-				this.w = current_mana;
+				if(current_mana < 0) {
+					this.w = 0;
+				}
+				else this.w = current_mana;
 			})
 			
 		//Main character
 		var player1 = Crafty.e("Player1, PlayerManager, 2D, DOM, Color, Keyboard, Multiway")
-			.playermanager(100,5)
+			.playermanager(100,1)
 			.color('rgb(0,255,0)')
 			.attr({ x: 300, y: 150, w: 25, h: 25 })
 			.multiway(4, {W: -90, S: 90, D: 0, A: 180})
