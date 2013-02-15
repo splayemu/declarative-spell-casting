@@ -69,7 +69,8 @@ $(document).ready(function() {
 		return str;
 	};
 	/* end of syn_node */
-
+	
+	
 	// TOKEN_LIST - this should be an ordered list of tuples token_names:pattern_match
 	//   TOK_CURSOR - breaks down into the cursor_x and cursor_y
 	//   TOK_FIRE	- breaks down into the fire element
@@ -92,12 +93,14 @@ $(document).ready(function() {
 	*/
 	function scan(spell) {
 		var found_tok_list = new Array();
+		// cur_tok maintains the token in the making
 		var cur_tok = '';
-		// first pass of spell should break everything into tokens
-		for (var i=0; i < spell.length; i++) {
-			// scan for tokens
+		spell = spell + ' ';
+		for (var i = 0; i < spell.length; i++) {
 			cur_tok = cur_tok + spell[i];
+			
 			// keywords first - each of these refresh cur_tok when chosen
+		/*
 			var tok_cursor_m = cur_tok.match(/cursor/);
 			if (tok_cursor_m != null) {
 				found_tok_list.push(new Syn_node ('TOK_CURSOR', ''));
@@ -115,13 +118,10 @@ $(document).ready(function() {
 				found_tok_list.push(new Syn_node ('TOK_SHAPE', ''));
 				cur_tok = '';
 				continue;
-			}
-			var tok_move_m = cur_tok.match(/move/);
-			if (tok_move_m != null) {
-				found_tok_list.push(new Syn_node ('TOK_MOVE', ''));
-				cur_tok = '';
-				continue;
-			}		
+			} 
+		*/
+			//log("Looking at: " + cur_tok);
+			var tokens_to_add = new Array();
 			
 			// grammar punctuation - these need to break up the words to detect for identifiers
 			// for example - if a comma, paren, or whitespace has arrived but the token has not been identified,
@@ -131,53 +131,55 @@ $(document).ready(function() {
 			var tok_rp_m = cur_tok.search(/\)/);
 			var tok_ws_m = cur_tok.search(/\s/);
 			if (tok_comma_m != -1) {
-				found_tok_list.push(new Syn_node (',', ''));
+				//log("Found comma");
+				tokens_to_add.push(new Syn_node (',', ''));
 				cur_tok = cur_tok.slice(0,tok_comma_m);
 			}	
 
 			else if (tok_lp_m != -1) {
-				found_tok_list.push(new Syn_node ('(', ''));
+				tokens_to_add.push(new Syn_node ('(', ''));
 				cur_tok = cur_tok.slice(0,tok_lp_m);
 			}	
 
 			else if (tok_rp_m != -1) {
-				found_tok_list.push(new Syn_node (')', ''));
+				tokens_to_add.push(new Syn_node (')', ''));
 				cur_tok = cur_tok.slice(0,tok_rp_m);
 			}	
 			// whitespace pushes no character
-			// THERE IS A MAJOR BUG RIGHT HERE
 			// identifier identifier does not catch
 			else if (tok_ws_m != -1) {
 				cur_tok = cur_tok.slice(0,tok_ws_m);
+				//new_word = true;
 			}	
 			else {continue;}
 			
 			// indentifiers and numbers
-			// the splicing on here may fail for w/e reason
 			var tok_ident_m = cur_tok.match(/[a-zA-Z_][a-zA-Z0-9_]*/);
 			if (tok_ident_m != null) {
+				//if(new_word) 
+				//log("Found ident");
 				var new_node = new Syn_node ('TOK_IDENTIFIER', tok_ident_m[0])
 				//log('tok[new_node]: ' + new_node.get_lex_name());		
-				found_tok_list.splice(found_tok_list.length - 1, 0, new_node);
+				tokens_to_add.unshift(new_node);
 				cur_tok = '';
-				continue;
 			}	
-			var tok_number_m = cur_tok.match(/-?[0-9]+/);
+			var tok_number_m = cur_tok.match(/-?[0-9 ]+/);
 			if (tok_number_m != null) {
 				var new_node = new Syn_node ('TOK_NUMBER', tok_number_m[0])
 				//log('tok[new_node]: ' + new_node.get_lex_name());	
-				found_tok_list.splice(found_tok_list.length - 1, 0, new_node);
+				//found_tok_list.splice(found_tok_list.length - 1, 0, new_node);
+				tokens_to_add.unshift(new_node);
 				cur_tok = '';
-				continue;
 			}		
 			// catch alls
 			var err_catch_all_m = cur_tok.match(/[^\0]+/);
 			if (err_catch_all_m != null) {
-				found_tok_list.push('ERR_TOKEN, ' + err_catch_all_m[0]);
+				tokens_to_add.unshift('ERR_TOKEN, ' + err_catch_all_m[0]);
 				cur_tok = '';		
 			}
-			
-			
+			//log("Size of tokens to add: " + tokens_to_add.length);
+			found_tok_list = found_tok_list.concat(tokens_to_add);
+	
 		}
 		// Add an end of scan node
 		found_tok_list.splice(found_tok_list.length, 0, new Syn_node ('TOK_EOS', 'end of spell'));
@@ -270,23 +272,29 @@ $(document).ready(function() {
 		var current_cast = new Array();
 		for(var i = 0; i < token_list.length; i++) {
 		
+			var tok_error_m = token_list[i].get_lex_name().match(/ERR_TOKEN/);
+			if (tok_error_m != null) {
+				log("Error. Quiting.");
+				break;
+			} 		
+			
 			var tok_ident_m = token_list[i].get_lex_name().match(/TOK_IDENT/);
 			if (tok_ident_m != null) {
 				current_cast.push(token_list[i]);
 				continue;
 			} 		
 			
-			var tok_shape_m = token_list[i].get_lex_name().match(/TOK_SHAPE/);
+			/*var tok_shape_m = token_list[i].get_lex_name().match(/TOK_SHAPE/);
 			if (tok_shape_m != null) {
 				current_cast.push(token_list[i]);
 				continue;
-			}
+			} */
 			
-			var tok_fire_m = token_list[i].get_lex_name().match(/TOK_FIRE/);
+			/*var tok_fire_m = token_list[i].get_lex_name().match(/TOK_FIRE/);
 			if (tok_fire_m != null) {
 				current_cast.push(token_list[i]);
 				continue;
-			}	
+			} */	
 			
 			var tok_comma_m = token_list[i].get_lex_name().match(/,/);		
 			if (tok_comma_m != null) {
@@ -310,6 +318,28 @@ $(document).ready(function() {
 		return root;
 	};	
 
+	/* parse_spell_with_arguments - takes in a token_list and looks for an ident and arguments 
+		Output - will output a token list
+	*/
+	function parse_spell_with_arguments(token_list, current_parent) {
+		// The first token must be an identifier or a library spell
+		//var tok_shape_m = token_list[i].get_lex_name().match(/TOK_SHAPE/);
+		var tok_ident_m = token_list[i].get_lex_name().match(/TOK_IDENT/);
+		//if (tok_shape_m != null) {
+		//	current_cast.push(token_list[i]);
+		//}
+		if (tok_ident_m != null) {
+			current_cast.push(token_list[i]);
+		} 	
+		else { // throw an error
+			log("Error. casting a spell must start with a library spell or a declared spell.");
+			return;
+		}
+		// Arguments must be numbers
+		for(var i = 1; i < token_list.length; i++) {
+			
+		}
+	}
 		
 	function rec_traverse_grammar_tree(spell_root, component_list) {
 		// it will be a recursive function that switches on the lex_name
@@ -407,7 +437,7 @@ $(document).ready(function() {
 	//	Crafty.background('rgb(127,127,127)');	
 		
 	var spells_toks = new Array();
-	spell = 'shape fire, lol fire';
+	spell = 'shape, accelerate (calc 5 0) 10';
 
 	spells_toks = scan(spell);
 	
