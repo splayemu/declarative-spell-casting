@@ -272,6 +272,7 @@ $(document).ready(function() {
 		var current_cast = new Array();
 		for(var i = 0; i < token_list.length; i++) {
 		
+		/*
 			var tok_error_m = token_list[i].get_lex_name().match(/ERR_TOKEN/);
 			if (tok_error_m != null) {
 				log("Error. Quiting.");
@@ -282,7 +283,7 @@ $(document).ready(function() {
 			if (tok_ident_m != null) {
 				current_cast.push(token_list[i]);
 				continue;
-			} 		
+			} 	*/	
 			
 			/*var tok_shape_m = token_list[i].get_lex_name().match(/TOK_SHAPE/);
 			if (tok_shape_m != null) {
@@ -295,7 +296,7 @@ $(document).ready(function() {
 				current_cast.push(token_list[i]);
 				continue;
 			} */	
-			
+			/*
 			var tok_comma_m = token_list[i].get_lex_name().match(/,/);		
 			if (tok_comma_m != null) {
 				current_parent.adopt(token_list[i]);
@@ -313,7 +314,7 @@ $(document).ready(function() {
 					current_cast.pop();
 				}
 				continue;
-			}			
+			} */			
 		}
 		return root;
 	};	
@@ -329,7 +330,9 @@ $(document).ready(function() {
 		//	current_cast.push(token_list[i]);
 		//}
 		if (tok_ident_m != null) {
-			current_cast.push(token_list[i]);
+			var spell_with_arguments = new Syn_node ('TOK_SPELL', 'spell_with_arguments');
+			current_parent.adopt(spell_with_arguments);
+			current_parent = spell_with_arguments;
 		} 	
 		else { // throw an error
 			log("Error. casting a spell must start with a library spell or a declared spell.");
@@ -337,7 +340,13 @@ $(document).ready(function() {
 		}
 		// Arguments must be numbers
 		for(var i = 1; i < token_list.length; i++) {
-			
+			var tok_number_m = token_list[i].get_lex_name().match(/TOK_NUMBER/);
+			//if (tok_shape_m != null) {
+			//	current_cast.push(token_list[i]);
+			//}
+			if (tok_number_m != null) {
+				current_parent.adopt(token_list[i]);
+			} 				
 		}
 	}
 		
