@@ -271,7 +271,7 @@ $(document).ready(function() {
 		// read through the token list
 		var current_cast = new Array();
 		for(var i = 0; i < token_list.length; i++) {
-		
+			i += parse_spell_with_arguments(token_list, i, current_parent);
 		/*
 			var tok_error_m = token_list[i].get_lex_name().match(/ERR_TOKEN/);
 			if (tok_error_m != null) {
@@ -321,11 +321,13 @@ $(document).ready(function() {
 
 	/* parse_spell_with_arguments - takes in a token_list and looks for an ident and arguments 
 		Output - will output a token list
+		ident [argument ...]
 	*/
-	function parse_spell_with_arguments(token_list, current_parent) {
+	function parse_spell_with_arguments(token_list, index, current_parent) {
+		var counter = 0;
 		// The first token must be an identifier or a library spell
 		//var tok_shape_m = token_list[i].get_lex_name().match(/TOK_SHAPE/);
-		var tok_ident_m = token_list[i].get_lex_name().match(/TOK_IDENT/);
+		var tok_ident_m = token_list[index + counter].get_lex_name().match(/TOK_IDENT/);
 		//if (tok_shape_m != null) {
 		//	current_cast.push(token_list[i]);
 		//}
@@ -333,21 +335,34 @@ $(document).ready(function() {
 			var spell_with_arguments = new Syn_node ('TOK_SPELL', 'spell_with_arguments');
 			current_parent.adopt(spell_with_arguments);
 			current_parent = spell_with_arguments;
+				current_parent.adopt(token_list[index + counter]);
+			counter++;
 		} 	
 		else { // throw an error
 			log("Error. casting a spell must start with a library spell or a declared spell.");
 			return;
 		}
-		// Arguments must be numbers
-		for(var i = 1; i < token_list.length; i++) {
-			var tok_number_m = token_list[i].get_lex_name().match(/TOK_NUMBER/);
+		/* Argument detecter goes until a ',' is found */
+		for(; counter < token_list.length; counter++) {
+			var tok_number_m = token_list[index + counter].get_lex_name().match(/TOK_NUMBER/);
+			var tok_comma_m  = token_list[index + counter].get_lex_name().match(/,/);		
+			var tok_eos_m    = token_list[index + counter].get_lex_name().match(/TOK_EOS/);	
 			//if (tok_shape_m != null) {
 			//	current_cast.push(token_list[i]);
 			//}
 			if (tok_number_m != null) {
-				current_parent.adopt(token_list[i]);
-			} 				
+				current_parent.adopt(token_list[index + counter]);
+			} 	
+			else if (tok_comma_m != null || tok_eos_m != null) {
+				break;
+			}			
+			else { // throw an error
+				log("Error. Arguments must be numbers.");
+				return;
+			}
+
 		}
+		return counter;
 	}
 		
 	function rec_traverse_grammar_tree(spell_root, component_list) {
@@ -446,7 +461,7 @@ $(document).ready(function() {
 	//	Crafty.background('rgb(127,127,127)');	
 		
 	var spells_toks = new Array();
-	spell = 'shape, accelerate (calc 5 0) 10';
+	spell = 'shape 6 5 7, accelerate 10';
 
 	spells_toks = scan(spell);
 	
