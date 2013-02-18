@@ -209,21 +209,52 @@ $(document).ready(function() {
 			this.bind('Echo', function() {
 				log(this.name + " says hi.");
 			});
+			this.bind('EnterFrame', function () {
+				if(this.spell_ast.get_children().length != 0) {
+					this.real_time_spell_interpreter(this.spell_ast.shift_child());
+				}				
+			});
 		},
 		
 		// constructor for spell
-		spell: function(name, mana_cost) {
-			this.name = name;
-			//this.parent = parent;
-			this.mana_cost = mana_cost;
-			log(this.name + " costs " + this.mana_cost + " mana.");
+		spell: function(spell_name, player_id, spell_ast) {
+			this.name = spell_name;
+			this.player_id = player_id;
+			this.spell_ast = spell_ast;
+			//this.mana_cost = mana_cost;
+			log(this.name + " initialized with player_id: " + this.player_id);
 			return this;
 		},
-		getManaCost: function() {
-			return this.mana_cost;
+		shape: function (spell, size) {
+			log("Printing arguments to shape: ");
+			//log("player_id: " + player_id);
+			log("size: " + size);
+			spell.addComponent("2D, DOM, Collision, PhysicalSpell").physicalspell(size, getMyX(), getMyY(), 'rgb(255,10,10)');
+			//var spell = Crafty.e("2D, DOM, Collision, PhysicalSpell")
+			//	.physicalspell(size, getMyX(), getMyY(), 'rgb(255,10,10)')
 		},
+		//getManaCost: function() {
+		//	return this.mana_cost;
+		//},
 		getName: function() {
-			return this.name;
+			return this.name; 
+		},
+		/* Precondidionts - spell_root != undefined */
+		real_time_spell_interpreter: function(spell_root) {
+			var children = spell_root.get_children();
+			//for(var i = 0; i < children.length; i++) {
+			//	log("children[" + i + "]:" + children[i].get_lex_info());
+			//}
+
+			var spell_name = children[0].get_lex_info();
+			var arguments = children.slice(1);
+			log("Looking at " + spell_name + " with arguments ");
+			for(i = 0; i < arguments.length; i++) {
+				log("Argument[" + i + "]:" + arguments[i].toString() + " with value " + arguments[i].get_lex_info());
+			}
+			//cast(player_id, spell_name, arguments);
+			var the_spell = library_spells[spell_name];
+			the_spell(this, arguments[0].get_lex_info()); 
 		},
 	}); 
 	/* end game components */
@@ -241,39 +272,17 @@ $(document).ready(function() {
 		return mousepos._y;
 	}
 
-	function getMyX() {
+	getMyX = function() {
 		var player1 = Crafty("Player1");
 		return player1._x;
 	}
 
-	function getMyY() {
+	getMyY = function() {
 		var player1 = Crafty("Player1");
 		return player1._y;
 	}
 	/* end general purpose global functions */
 
-
-	var fireball = function(wizard) {
-		var mousepos_x = getMouseX();
-		var mousepos_y = getMouseY();
-		var my_x = getMyX();
-		var my_y = getMyY();
-		var speed = 3;
-		var direction = Math.atan2(mousepos_x - my_x, mousepos_y - my_y);
-		var spell = shape("fire",8);
-		//accelerate(spell[0], direction, speed);
-		
-		//var params = [5, "fireball", 1, direction, speed];	
-		//wizard.trigger("Cast", params);
-	}
-
-	var ball = function(wizard) {
-		var my_x = getMyX();
-		var my_y = getMyY();
-		
-		var params = [5, "ball", 1, 0, 0];	
-		wizard.trigger("Cast", params);
-	}
 
 	
 	function init() {
@@ -282,7 +291,7 @@ $(document).ready(function() {
 		
 		
 		var spells_toks = new Array();
-		var spell = 'shape 40 10 5';
+		var spell = 'shape 40, shape 60';
 
 		spells_toks = scan(spell);
 		
@@ -330,10 +339,10 @@ $(document).ready(function() {
 			.multiway(4, {W: -90, S: 90, D: 0, A: 180})
 			.bind("KeyDown", function(e) {
 				if (this.isDown('SPACE')) {
-					//for(var i = 0; i < 360; i++) {
-					//	fireball(this, i);
-					//}
-					real_time_si(root_node);
+					// find player id
+					var player = Crafty("Player1");
+					log("player_id " + player[0]);
+					cast(player[0], "block", root_node);
 				}
 			});
 			

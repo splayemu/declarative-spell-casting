@@ -13,6 +13,38 @@ $(document).ready(function() {
 		player_spells[name] = ast;
 	};
 
+	/* general cast - this will
+	
+	
+	*/ 
+	cast		= function (player_id, spell_name, spell_ast) {
+		log("Cast called with player_id: " + player_id + " spell_name: " + spell_name);
+		var spell = Crafty.e("Spell")
+			.spell(player_id + "_" + spell_name, player_id, spell_ast);	
+			
+		
+		/*if(spell_name == 'shape') {
+			if(arguments.length > 1) {
+				log("Error: Shape must only have 1 arguments");
+				return;
+			}
+			shape(player_id, arguments[0].get_lex_info());
+		}
+		else {
+			var the_spell = library_spells[spell_name];
+			the_spell(arguments); 
+		}*/
+	
+
+	}
+	var shape			= function (spell, size) {
+		log("Printing arguments to shape: ");
+		//log("player_id: " + player_id);
+		log("size: " + size);
+		spell.addComponent("2D, DOM, Collision, PhysicalSpell").physicalspell(size, getMyX(), getMyY(), 'rgb(255,10,10)');
+		//var spell = Crafty.e("2D, DOM, Collision, PhysicalSpell")
+		//	.physicalspell(size, getMyX(), getMyY(), 'rgb(255,10,10)')
+	}
 	/* Library calls 
 	 * These are the base functions that manipulate the game world.
 	 * Deriving manacost - 
@@ -26,16 +58,7 @@ $(document).ready(function() {
 	 * Manacost: 2 * size
 	 * Output: returns the entity created
 	 */
-	var shape			= function (x, y, size) {
-		log("Printing arguments to shape: ");
-		log("x: " + x);
-		log("y: " + y);
-		log("size: " + size);
-		var spell = Crafty.e("2D, DOM, Collision, PhysicalSpell, Spell")
-			.physicalspell(size, x, y, 'rgb(255,10,10)')
-			.spell("Shape", 2 * size);	
-		return spell;
-	}
+
 	/* accelerate - adds acceleration to a movable spell
 	 * Parameters:
 	 *	spell_id 	- the id for the spell
@@ -44,7 +67,14 @@ $(document).ready(function() {
 	 * Manacost: amount * size (of entity)
 	 * Output: in game effects
 	 */	
-	var accelerate		= function (spell_id, direction, amount) {
+	var accelerate		= function (arguments) {
+		if(arguments.length != 3) {
+			log("Error: accelerate must only have 3 arguments");
+			return;
+		}
+		spell_id = arguments[0];
+		direction = arguments[1];
+		amount = arguments[2];
 		Crafty(spell_id).accelerate(direction, amount);
 	}
 	/* End of Library calls */

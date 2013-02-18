@@ -41,6 +41,29 @@ $(document).ready(function() {
 		}
 	};
 
+	// disown - returns the node removed
+	Syn_node.prototype.disown = function(child_node) {
+		log(this.lex_name + " disowning: " + child_node.get_lex_name());
+		for(var i = 0; i < this.children.length; i++) {
+			if(child_node === this.children[i]) {
+				return this.children.splice(i, 1);
+			}
+		}
+	};
+	
+	// pop_child - returns the node removed
+	Syn_node.prototype.shift_child = function() {
+		if(this.children.length != 0) {
+			child = this.children.shift();
+			log(this.lex_name + " removing: " + child.get_lex_name());
+			return child;
+		}
+		else {
+			// throw an error
+			log(this.lex_name + " has no children.");
+		}
+	};
+	
 	Syn_node.prototype.get_lex_name = function() {
 		return this.lex_name;
 	};
@@ -210,50 +233,7 @@ $(document).ready(function() {
 		// read through the token list
 		var current_cast = new Array();
 		for(var i = 0; i < token_list.length; i++) {
-			i += parse_spell_with_arguments(token_list, i, current_parent);
-		/*
-			var tok_error_m = token_list[i].get_lex_name().match(/ERR_TOKEN/);
-			if (tok_error_m != null) {
-				log("Error. Quiting.");
-				break;
-			} 		
-			
-			var tok_ident_m = token_list[i].get_lex_name().match(/TOK_IDENT/);
-			if (tok_ident_m != null) {
-				current_cast.push(token_list[i]);
-				continue;
-			} 	*/	
-			
-			/*var tok_shape_m = token_list[i].get_lex_name().match(/TOK_SHAPE/);
-			if (tok_shape_m != null) {
-				current_cast.push(token_list[i]);
-				continue;
-			} */
-			
-			/*var tok_fire_m = token_list[i].get_lex_name().match(/TOK_FIRE/);
-			if (tok_fire_m != null) {
-				current_cast.push(token_list[i]);
-				continue;
-			} */	
-			/*
-			var tok_comma_m = token_list[i].get_lex_name().match(/,/);		
-			if (tok_comma_m != null) {
-				current_parent.adopt(token_list[i]);
-				current_parent = token_list[i];
-				current_parent.adopt_array(current_cast);
-				while(current_cast.length != 0) {
-					current_cast.pop();
-				}
-				continue;
-			}			
-			var tok_eos_m = token_list[i].get_lex_name().match(/TOK_EOS/);			
-			if (tok_eos_m != null) {
-				current_parent.adopt_array(current_cast);
-				while(current_cast.length != 0) {
-					current_cast.pop();
-				}
-				continue;
-			} */			
+			i += parse_spell_with_arguments(token_list, i, current_parent);			
 		}
 		return root;
 	};	
@@ -329,27 +309,7 @@ $(document).ready(function() {
 					recur on next spell in the AST
 	
 	*/
-	real_time_spell_interpreter = function(spell_root) {
-		var children = spell_root.get_children();
-		//for(var i = 0; i < children.length; i++) {
-		//	log("children[" + i + "]:" + children[i].get_lex_info());
-		//}
-		var spell_name = children[0].get_lex_info();
-		var arguments = children.slice(1);
-		log("Looking at " + spell_name + " with arguments ");
-		for(i = 0; i < arguments.length; i++) {
-			log("Argument[" + i + "]:" + arguments[i].toString() + " with value " + arguments[i].get_lex_info());
-		}
-		var our_function = library_spells[spell_name];
-		our_function(arguments[0].get_lex_info(), arguments[1].get_lex_info(), arguments[2].get_lex_info());
-	}
-	
-	real_time_si = function(spell_root) {
-		spell_children = spell_root.get_children();	
-		for(var i = 0; i < spell_children.length; i++) {
-			real_time_spell_interpreter(spell_children[i]);
-		} 
-	}
+
 
 	//function init() {
 	//	Crafty.init(600, 300);
