@@ -5,7 +5,10 @@ $(document).ready(function() {
 			throw new Error(msg);
 		}, 0);
 	}
-
+	
+	player_spells	= {};
+	library_spells	= {};
+	
 	// Generic object size
 	Object.size = function(obj) {
 		var size = 0, key;
@@ -15,39 +18,6 @@ $(document).ready(function() {
 		return size;
 	};
 
-
-	/* Library calls 
-	 * These are the base functions that manipulate the game world.
-	 * Deriving manacost - 
-	 *
-	 *
-	 **/
-	/* shape - creates a movable spell of a certain size and color
-	 * Parameters:
-	 *	element - the element (color) of the spell
-	 *	size 	- the size of the element
-	 * Manacost: 2 * size
-	 * Output: returns the entity created
-	 */
-	var shape		= function (element, size) {
-		var spell = Crafty.e("2D, DOM, Collision, PhysicalSpell, Spell")
-			.physicalspell(size, getMyX(), getMyY(), 'rgb(255,10,10)')
-			.spell("Shape", 2 * size);	
-		return spell;
-	}
-	/* accelerate - adds acceleration to a movable spell
-	 * Parameters:
-	 *	spell_id 	- the id for the spell
-	 *	direction 	- the direction of the acceleration
-	 *	amount	 	- the amount of acceleration
-	 * Manacost: amount * size (of entity)
-	 * Output: in game effects
-	 */	
-	var accelerate 		= function (spell_id, direction, amount) {
-		Crafty(spell_id).accelerate(direction, amount);
-	}
-	/* End of Library calls */
-	
 	/* game components */
 	Crafty.c("PlayerManager", {
 		init: function() {
@@ -232,8 +202,6 @@ $(document).ready(function() {
 		}
 
 	});
-
-
 	
 	Crafty.c("Spell", {
 		init: function() {
@@ -312,6 +280,27 @@ $(document).ready(function() {
 		Crafty.init(600, 300);
 		Crafty.background('rgb(127,127,127)');	
 		
+		
+		var spells_toks = new Array();
+		var spell = 'shape 40 10 5';
+
+		spells_toks = scan(spell);
+		
+		log("Starting SCAN");	
+		for(var i = 0; i < spells_toks.length;i++) {
+			log('tok[' + i + ']: ' + spells_toks[i].get_lex_name());
+		}
+		log("Ending SCAN\n");
+		
+		log("Starting PARSE");
+		var root_node = parse(spells_toks);
+		log("Ending PARSE\n");
+		
+		tree_str = root_node.toString();
+		log('traversal : ' + tree_str);
+		// depth first traversal of the grammar tree
+
+		
 		var mousepos = Crafty.e("MousePos, DOM, 2D, Text")
 			.attr({ x: 20, y: 20, w: 100, h: 20 })
 			//.text("(0,0)");
@@ -344,7 +333,7 @@ $(document).ready(function() {
 					//for(var i = 0; i < 360; i++) {
 					//	fireball(this, i);
 					//}
-					ball(this);
+					real_time_si(root_node);
 				}
 			});
 			

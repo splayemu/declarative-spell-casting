@@ -3,7 +3,14 @@
  All in all, the functions take in a string, and output an abstract syntax tree */
 
 
-/* syn_node declaration 
+$(document).ready(function() {
+	function log(msg) {
+		setTimeout(function() {
+			throw new Error(msg);
+		}, 0);
+	}
+	
+	/* syn_node declaration 
 	The fun that is a syn_node is a basic tree data structure. 
 	
 	Contains:
@@ -16,13 +23,7 @@
 		- getters			- returns information
 		- toString			- returns the stringafied object
 
-*/
-$(document).ready(function() {
-	function log(msg) {
-		setTimeout(function() {
-			throw new Error(msg);
-		}, 0);
-	}
+	*/
 	function Syn_node (lex_name, lex_info) {
 		this.lex_name = lex_name;
 		this.lex_info = lex_info;
@@ -91,7 +92,7 @@ $(document).ready(function() {
 	 * Output: an array of tokens
 
 	*/
-	function scan(spell) {
+	scan = function(spell) {
 		var found_tok_list = new Array();
 		// cur_tok maintains the token in the making
 		var cur_tok = '';
@@ -185,68 +186,6 @@ $(document).ready(function() {
 		found_tok_list.splice(found_tok_list.length, 0, new Syn_node ('TOK_EOS', 'end of spell'));
 		return found_tok_list;
 	}
-
-/*
-	function parse(token_list) {
-		// create the root node
-		var root = new Syn_node ('TOK_ROOT', '');
-		// read through the token list
-		var saved_tok = '';
-		for(var i = 0; i < token_list.length; i++) {
-			// if the token is an identifier or a keyword, cache it for later
-			var tok_cursor_m = token_list[i].get_lex_name().match(/TOK_CURSOR/);
-			if (tok_cursor_m != null) {
-				saved_tok = token_list[i];
-			}
-			var tok_move_m = token_list[i].get_lex_name().match(/TOK_MOVE/);
-			if (tok_move_m != null) {
-				saved_tok = token_list[i];
-				continue;
-			} 
-			var tok_shape_m = token_list[i].get_lex_name().match(/TOK_SHAPE/);
-			if (tok_shape_m != null) {
-				saved_tok = token_list[i];
-				continue;
-			}
-			var tok_fire_m = token_list[i].get_lex_name().match(/TOK_FIRE/);
-			if (tok_fire_m != null) {
-				saved_tok = token_list[i];
-				continue;
-			}
-			var tok_ident_m = token_list[i].get_lex_name().match(/TOK_IDENT/);
-			if (tok_ident_m != null) {
-				saved_tok = token_list[i];
-				continue;
-			} 
-			// if the token is a left PAREN
-			if(token_list[i].get_lex_name() == ',') {
-				// adopt the the previous name
-				//log("Found '(' and adopted: " + saved_tok.get_lex_name());
-				saved_tok.adopt(token_list[i]);
-				// grab the rest until a ')'
-				i++;
-				for(; i < token_list.length; i++) {
-					//log("Adopting " + token_list[i].get_lex_name());
-					// if it finds the ')', adopt the token and break
-					if(token_list[i].get_lex_name() == ')') {
-						saved_tok.adopt(token_list[i]);
-						break;
-					}
-					
-					// otherwise adopt the token
-
-					saved_tok.adopt(token_list[i]);
-					
-				}
-				root.adopt(saved_tok);
-				continue;
-			} 
-			// throw an error if nothing picks up the token
-		}
-		return root;
-	}; */
-	
-	
 	
 	/* tree shape:
 			  root
@@ -264,7 +203,7 @@ $(document).ready(function() {
 	   INPUTS - token list
 	   OUTUPTS - abstract syntax tree
 	 */
-	function parse(token_list) {
+	parse = function(token_list) {
 		// create the root node
 		var root = new Syn_node ('TOK_ROOT', '');
 		var current_parent = root;
@@ -323,7 +262,7 @@ $(document).ready(function() {
 		Output - will output a token list
 		ident [argument ...]
 	*/
-	function parse_spell_with_arguments(token_list, index, current_parent) {
+	parse_spell_with_arguments = function(token_list, index, current_parent) {
 		var counter = 0;
 		// The first token must be an identifier or a library spell
 		//var tok_shape_m = token_list[i].get_lex_name().match(/TOK_SHAPE/);
@@ -364,104 +303,60 @@ $(document).ready(function() {
 		}
 		return counter;
 	}
-		
-	function rec_traverse_grammar_tree(spell_root, component_list) {
-		// it will be a recursive function that switches on the lex_name
-		// each lex_name will have a different effect
-		// for example:
-			// for the lex_name '('
-			// the first child must be an identifier or a keyword
-			// that first child
-		
-		switch(spell_root.get_lex_name())
-		{
-		// TOK_ROOT - TOK_ROOT is the only name
-			// may have 1+ children
-			// children may be spells (for right now)
-			// error: Please check your syntax
-		case 'TOK_ROOT':
-			var children = spell_root.get_children();
-			for(var i = 0; i < children.length; i++) {
-				// need to check to make sure it is a spell (hash of the valid spells)
-				rec_traverse_grammar_tree(children[i]);
-			}
-			break;
-			
-		// Spells - (identifier or keywork) 
-			// may have 2+ children
-			// first child must be '(', last child must be ')', other children can be numbers, identifiers, or keywords
-			// error: spell dependent, but invalid arguments
-		
-		// Shape - TOK_SHAPE
-			// must contain ( ELEMENT ) as the children
-		case 'TOK_SHAPE':
-			var children = spell_root.get_children();		
-			if(children[0].get_lex_name != '(' || children[children.length - 1].get_lex_name != ')') {
 
-				log("Invalid Arguments");
-			}	
-			//component_list.push({'Projectile': ['lewl']});
-			// create a storage system for all the variables
-			// array of projectiles each with their own component hash
-				// {component : necessary data}
-			// deal with element
-			switch(children[1].get_lex_name)
-			{
-			case 'TOK_FIRE':
-			//	component_list.push({'Color':['rgb(255,10,10)']});
-				break;
-				
-			default:
-				// output error (INVALID ELEMENT)
-				break;
-			}
-			mousepos_x = getMouseX();
-			mousepos_y = getMouseY();
-			my_x = getMyX();
-			my_y = getMyY();
-			var speed = 3;
-			var direction = Math.atan2(mousepos_x - my_x, mousepos_y - my_y );
-			Crafty.e("2D, DOM, Collision, Projectile, Color, Spell")
-				.projectile(8, my_x, my_y , direction, speed)
-				.color('rgb(255,10,10)')
-				.spell('Fireball', player1)
-			break;
-			
-		// Move - TOK_MOVE
-			// must contain ( DIRECTION, VELOCITY ) as the children
-		case 'TOK_MOVE':
-			var children = spell_root.get_children();		
-			if(children[0].get_lex_name != '(' || children[children.length - 1].get_lex_name != ')') {
-				// output error (INVALID ARGUMENTS)
-			}		
+	/* Real Time Spell Interpreter 
+		Here is the big boy; the function of all functions. This is the intersection between interpreter and game.
 		
-			break;
+		This guy will work with as a small step interpreter. It will evaluate one spell cast at a time (separated by the commas).
 		
-		
-		
-		default:
-			log('FAIL');
-			return -1;
+		Psuedo Code:
+			During each step of the interpretation:
+				Evaluate expressions in the arguments
+					- if a spell is part of an expression, recur on the AST of the spell
+				Call the base spell library lookup.
+				if ! undefined
+					mana -= manacost
+					call function
+				else
+					call spell library lookup (returns a spell AST)
+					if ! undefined
+						mana -= trivial_manacost (costs trivial mana to recur)
+						recur on the AST of the spell
+					else
+						throw an error "Invalid spell"
+				If there is another spell,
+					mana -= trivial_manacost
+					recur on next spell in the AST
+	
+	*/
+	real_time_spell_interpreter = function(spell_root) {
+		var children = spell_root.get_children();
+		//for(var i = 0; i < children.length; i++) {
+		//	log("children[" + i + "]:" + children[i].get_lex_info());
+		//}
+		var spell_name = children[0].get_lex_info();
+		var arguments = children.slice(1);
+		log("Looking at " + spell_name + " with arguments ");
+		for(i = 0; i < arguments.length; i++) {
+			log("Argument[" + i + "]:" + arguments[i].toString() + " with value " + arguments[i].get_lex_info());
 		}
-		return 0;
-	};
-
-	// this function needs to traverse the spell_tree and create the corrrect entities
-	// Output - a storage system for holding all the entities and their data
-	function traverse_grammar_tree(spell_root) {
-		//var generated_entities = new entity_storage();
-		
-		rec_traverse_grammar_tree(spell_root);
-		
-		return;// generated_entities;
-	};
+		var our_function = library_spells[spell_name];
+		our_function(arguments[0].get_lex_info(), arguments[1].get_lex_info(), arguments[2].get_lex_info());
+	}
+	
+	real_time_si = function(spell_root) {
+		spell_children = spell_root.get_children();	
+		for(var i = 0; i < spell_children.length; i++) {
+			real_time_spell_interpreter(spell_children[i]);
+		} 
+	}
 
 	//function init() {
 	//	Crafty.init(600, 300);
 	//	Crafty.background('rgb(127,127,127)');	
-		
+	/*	
 	var spells_toks = new Array();
-	spell = 'shape 6 5 7, accelerate 10';
+	spell = 'accelerate 10, shape 6 5 7, accelerate 10';
 
 	spells_toks = scan(spell);
 	
@@ -478,9 +373,9 @@ $(document).ready(function() {
 	tree_str = root_node.toString();
 	log('traversal : ' + tree_str);
 	// depth first traversal of the grammar tree
-	traverse_grammar_tree(root_node);
-
-			
+	real_time_si(root_node); */
+	//tree_str = root_node.toString();
+	//log('traversal : ' + tree_str);	
 	//};
 
 	//init();
