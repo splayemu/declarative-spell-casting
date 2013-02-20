@@ -16,12 +16,12 @@ $(document).ready(function() {
 	/* general cast - this will
 	
 	
-	*/ 
+	*/ /*
 	cast		= function (player_id, spell_name, spell_ast) {
 		log("Cast called with player_id: " + player_id + " spell_name: " + spell_name);
 		var spell = Crafty.e("Spell")
 			.spell(player_id + "_" + spell_name, player_id, spell_ast);	
-			
+		*/	
 		
 		/*if(spell_name == 'shape') {
 			if(arguments.length > 1) {
@@ -36,15 +36,8 @@ $(document).ready(function() {
 		}*/
 	
 
-	}
-	var shape			= function (spell, size) {
-		log("Printing arguments to shape: ");
-		//log("player_id: " + player_id);
-		log("size: " + size);
-		spell.addComponent("2D, DOM, Collision, PhysicalSpell").physicalspell(size, getMyX(), getMyY(), 'rgb(255,10,10)');
-		//var spell = Crafty.e("2D, DOM, Collision, PhysicalSpell")
-		//	.physicalspell(size, getMyX(), getMyY(), 'rgb(255,10,10)')
-	}
+	//} 
+	
 	/* Library calls 
 	 * These are the base functions that manipulate the game world.
 	 * Deriving manacost - 
@@ -58,7 +51,16 @@ $(document).ready(function() {
 	 * Manacost: 2 * size
 	 * Output: returns the entity created
 	 */
-
+	 // big issue here is if size is not a number (and instead is a syn_node), it gets confused
+	var shape		= function (arguments) {
+		if(arguments.length != 2) {
+			log("Error: shape must only have 2 arguments. Has " + arguments.length + " argument(s) instead.");
+			return;
+		}
+		spell = arguments[0];
+		size = arguments[1].get_lex_info();
+		spell.shape(size);
+	}
 	/* accelerate - adds acceleration to a movable spell
 	 * Parameters:
 	 *	spell_id 	- the id for the spell
@@ -69,13 +71,13 @@ $(document).ready(function() {
 	 */	
 	var accelerate		= function (arguments) {
 		if(arguments.length != 3) {
-			log("Error: accelerate must only have 3 arguments");
+			log("Error: accelerate must only have 2 arguments");
 			return;
 		}
-		spell_id = arguments[0];
-		direction = arguments[1];
-		amount = arguments[2];
-		Crafty(spell_id).accelerate(direction, amount);
+		spell = arguments[0];
+		direction = arguments[1].get_lex_info();
+		amount = arguments[2].get_lex_info();
+		spell.accelerate(direction, amount);
 	}
 	/* End of Library calls */
 	
@@ -83,18 +85,18 @@ $(document).ready(function() {
 	var test_shape			= function (arguments) {
 		log("Shape is called");
 		for(var i = 0; i < arguments.length; i++) {
-			log("Argument[" + i + "]:" + arguments[i].get_lex_info());
+			log("Argument[" + i + "]:" + arguments[i]);
 		}
 	}
 	var test_accelerate 		= function (arguments) {
 		log("Accelerate is called.");
 		for(var i = 0; i < arguments.length; i++) {
-			log("Argument[" + i + "]:" + arguments[i].get_lex_info());
+			log("Argument[" + i + "]:" + arguments[i]);
 		}
 	}
 	
 	library_spells['shape'] = shape;
 	library_spells['accelerate'] = accelerate;
 	library_spells['test_shape'] = test_shape;
-	library_spells['test_accelerate'] = test_accelerate;	
+	library_spells['test_accelerate'] = test_accelerate;
 });

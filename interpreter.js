@@ -35,6 +35,16 @@ $(document).ready(function() {
 		this.children.push(child_node);
 	};
 	
+	/* Copies a node and its children */
+	Syn_node.prototype.copy = function() {
+		var copy = new Syn_node (this.get_lex_name(), this.get_lex_info());
+		var orig_children = this.get_children();
+		for(var i = 0; i < orig_children.length; i++) {
+			copy.adopt(orig_children[i].copy())
+		}
+		return copy;
+	};
+	
 	Syn_node.prototype.adopt_array = function(array) {
 		for(var i = 0; i < array.length; i++) {
 			this.adopt(array[i]);
@@ -283,60 +293,4 @@ $(document).ready(function() {
 		}
 		return counter;
 	}
-
-	/* Real Time Spell Interpreter 
-		Here is the big boy; the function of all functions. This is the intersection between interpreter and game.
-		
-		This guy will work with as a small step interpreter. It will evaluate one spell cast at a time (separated by the commas).
-		
-		Psuedo Code:
-			During each step of the interpretation:
-				Evaluate expressions in the arguments
-					- if a spell is part of an expression, recur on the AST of the spell
-				Call the base spell library lookup.
-				if ! undefined
-					mana -= manacost
-					call function
-				else
-					call spell library lookup (returns a spell AST)
-					if ! undefined
-						mana -= trivial_manacost (costs trivial mana to recur)
-						recur on the AST of the spell
-					else
-						throw an error "Invalid spell"
-				If there is another spell,
-					mana -= trivial_manacost
-					recur on next spell in the AST
-	
-	*/
-
-
-	//function init() {
-	//	Crafty.init(600, 300);
-	//	Crafty.background('rgb(127,127,127)');	
-	/*	
-	var spells_toks = new Array();
-	spell = 'accelerate 10, shape 6 5 7, accelerate 10';
-
-	spells_toks = scan(spell);
-	
-	log("Starting SCAN");	
-	for(var i = 0; i < spells_toks.length;i++) {
-		log('tok[' + i + ']: ' + spells_toks[i].get_lex_name());
-	}
-	log("Ending SCAN\n");
-	
-	log("Starting PARSE");
-	var root_node = parse(spells_toks);
-	log("Ending PARSE\n");
-	
-	tree_str = root_node.toString();
-	log('traversal : ' + tree_str);
-	// depth first traversal of the grammar tree
-	real_time_si(root_node); */
-	//tree_str = root_node.toString();
-	//log('traversal : ' + tree_str);	
-	//};
-
-	//init();
 });
