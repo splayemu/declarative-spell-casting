@@ -24,14 +24,14 @@ $(document).ready(function() {
 		- toString			- returns the stringafied object
 
 	*/
-	function Syn_node (lex_name, lex_info) {
+	Syn_node = function (lex_name, lex_info) {
 		this.lex_name = lex_name;
 		this.lex_info = lex_info;
 		this.children = new Array();
 	};
 
 	Syn_node.prototype.adopt = function(child_node) {
-		log(this.lex_name + " adopting: " + child_node.get_lex_name());
+		// log(this.lex_name + " adopting: " + child_node.get_lex_name());
 		this.children.push(child_node);
 	};
 	
@@ -53,7 +53,7 @@ $(document).ready(function() {
 
 	// disown - returns the node removed
 	Syn_node.prototype.disown = function(child_node) {
-		log(this.lex_name + " disowning: " + child_node.get_lex_name());
+		// log(this.lex_name + " disowning: " + child_node.get_lex_name());
 		for(var i = 0; i < this.children.length; i++) {
 			if(child_node === this.children[i]) {
 				return this.children.splice(i, 1);
@@ -65,7 +65,7 @@ $(document).ready(function() {
 	Syn_node.prototype.shift_child = function() {
 		if(this.children.length != 0) {
 			child = this.children.shift();
-			log(this.lex_name + " removing: " + child.get_lex_name());
+			// log(this.lex_name + " removing: " + child.get_lex_name());
 			return child;
 		}
 		else {
@@ -197,7 +197,7 @@ $(document).ready(function() {
 				tokens_to_add.unshift(new_node);
 				cur_tok = '';
 			}	
-			var tok_number_m = cur_tok.match(/-?[0-9 ]+/);
+			var tok_number_m = cur_tok.match(/-?[0-9.]+/);
 			if (tok_number_m != null) {
 				var new_node = new Syn_node ('TOK_NUMBER', tok_number_m[0])
 				//log('tok[new_node]: ' + new_node.get_lex_name());	

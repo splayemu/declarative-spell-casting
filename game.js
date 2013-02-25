@@ -53,17 +53,12 @@ $(document).ready(function() {
 				// increment mana
 				this.incrementMana(this.mana_regen);
 
-				// calculate mana_cost of active spells
+				// make sure that 
 				if(this.mana <= 0 && Object.size(this.active_spells) != 0) {
 					log("Destroying spells");
-					// THIS DOES NOT WORK. It seems that it is not quite destroying the spell
-					// CURRENTLY - this does not get activated
-					for(spell_id in this.active_spells) {
+					//for(spell_id in this.active_spells) {
 						Crafty("Spell").each(function() { this.destroy() } );
-					//	var name = Crafty(spell_id).getName();
-					//	log("Destroying id: " + spell_id + " with the name: " + name);
-					//	delete this.active_spells[spell_id];
-					}
+					//}
 				}
 			});
 			/* Cast - Will be functionized. Casts a spell
@@ -82,31 +77,18 @@ $(document).ready(function() {
 				*/ 
 				log("Cast called with player_id: " + this[0] + " spell_name: " + spell_name);
 				var spell = Crafty.e("Spell")
-					.spell("_" + spell_name, this, spell_ast);	
+					.spell(this[0], "_" + spell_name, spell_ast);	
 						
 				//this.mana -= mana_cost;
 				//manabar.trigger("ChangeMana", this.mana);
 				//var spell = shape("fire", 8);
 				this.active_spells[spell[0]] = spell.getName();
-				//log("Player casts: " + spell[0] + " at the manacost: " + spell.getManaCost());
-
-				//accelerate(spell[0], 0, 1);			
-				// checks to make sure the spell can be cast
-				/*if(this.mana - mana_cost > 0) {
-					this.mana -= mana_cost;
-					manabar.trigger("ChangeMana", this.mana);
-					this.active_spells[id] = name;
-					var spell = shape("fire", 8);
-					log("Player casts: " + spell[0] + " at the manacost: " + mana_cost);
-					accelerate(spell[0]);
-				}*/
-				/*else if(this.mana - mana_cost <= 0) {
-					Crafty(id).destroy();
-					log("Not enough mana to cast " + id);
 				
-				}*/
+				// determine manacost of spell and decrement it
+				this.decrementMana(10);
+				//log("Player casts: " + spell[0] + " at the manacost: " + spell.getManaCost());
+				
 			});
-			//});
 		},
 		
 		// constructor for the player
@@ -137,6 +119,7 @@ $(document).ready(function() {
 		decrementMana: function(mana_cost) {
 			this.mana -= mana_cost;
 			// update manabar
+			log("Decrementing mana to: " + this.mana + " with the amount of " + mana_cost);
 			this.manabar.trigger("ChangeMana", this.mana);
 		}
 
@@ -203,7 +186,7 @@ $(document).ready(function() {
 		accelerate: function(direction, speed) {
 				var additionaldX = Math.sin(direction) * speed;
 				var additionaldY = Math.cos(direction) * speed;
-				log("Accelerating dX: " + additionaldX + " dY: " + additionaldY);
+				//log("Accelerating dX: " + additionaldX + " dY: " + additionaldY);
 				this.attr({ dX: this.dX + additionaldX, dY: this.dY + additionaldY });
 		},
 		selfDestruct: function() {
@@ -222,31 +205,34 @@ $(document).ready(function() {
 		Methods:
 			shape 						- makes the spell physical
 			realTimeSpellInterpreter 	- 
+			
 				This guy will work as a small step interpreter. It will evaluate one spell cast at a time (separated by the commas).
+				Arguments: One spell_root
 				
 				Psuedo Code:
-					During each step of the interpretation:
-						Evaluate expressions in the arguments
-							- if a spell is part of an expression, recur on the AST of the spell
-						Call the base spell library lookup.
+					Evaluate expressions in the arguments
+						- if a spell is part of an expression, recur on the AST of the spell
+					Call the base spell library lookup.
+					if ! undefined
+						mana -= manacost
+						call function
+					else
+						call spell library lookup (returns a spell AST)
 						if ! undefined
-							mana -= manacost
-							call function
+							mana -= trivial_manacost (costs trivial mana to recur)
+							recur on the AST of the spell
 						else
-							call spell library lookup (returns a spell AST)
-							if ! undefined
-								mana -= trivial_manacost (costs trivial mana to recur)
-								recur on the AST of the spell
-							else
-								throw an error "Invalid spell"
-						If there is another spell,
-							mana -= trivial_manacost
-							recur on next spell in the AST
+							throw an error "Invalid spell"
+					If there is another spell,
+						mana -= trivial_manacost
+						recur on next spell in the AST
 	
 	*/
 	Crafty.c("Spell", {
 		init: function() {
+
 			this.bind('EnterFrame', function () {
+				//log("Parent_id = " + this.parent_id);
 				if(this.spell_ast.get_children().length != 0) {
 					this.realTimeSpellInterpreter(this.spell_ast.shift_child());
 				}				
@@ -254,12 +240,11 @@ $(document).ready(function() {
 		},
 		
 		// constructor for spell
-		spell: function(spell_name, player, spell_ast) {
+		spell: function(player_id, spell_name, spell_ast) {
 			this.name = spell_name;
-			this.parent = player;
+			this.parent_id = player_id;
 			this.spell_ast = spell_ast;
-			//this.mana_cost = mana_cost;
-			log(this.name + " initialized with player_id: " + this.parent[0]);
+			log(this.name + " initialized with player_id: " + this.parent_id);
 			return this;
 		},
 		
@@ -274,30 +259,27 @@ $(document).ready(function() {
 
 			this.addComponent("2D, Canvas, Collision, PhysicalSpell").physicalspell(size, getMyX(), getMyY(), 'rgb(255,10,10)');
 		},
-		//getManaCost: function() {
-		//	return this.mana_cost;
-		//},
 		getName: function() {
 			return this.name; 
 		},
 		/* Precondidionts - spell_root != undefined */
 		realTimeSpellInterpreter: function(spell_root) {
 			var children = spell_root.get_children();
-			for(var i = 0; i < children.length; i++) {
-				log("children[" + i + "]:" + children[i].get_lex_info());
-			}
+			//for(var i = 0; i < children.length; i++) {
+			//	log("children[" + i + "]:" + children[i].get_lex_info());
+			//}
 
 			var spell_name = children[0].get_lex_info();
 			var arguments = children.slice(1);
-			log("Looking at " + spell_name + " with arguments ");
-			for(i = 0; i < arguments.length; i++) {
-				log("Argument[" + i + "]: " + arguments[i].get_lex_info());
-			}
-			//cast(player_id, spell_name, arguments);
-			var the_spell = library_spells[spell_name];
+			//log("Looking at " + spell_name + " with arguments ");
+			//for(i = 0; i < arguments.length; i++) {
+			//	log("Argument[" + i + "]: " + arguments[i].get_lex_info());
+			//}
 			var parameters = [this].concat(arguments);
-			the_spell(parameters); 
-			//log("Player_id: " + this.parent[0]);
+			var the_spell = activate_library_spell(this, this.parent_id, spell_name, arguments);
+
+			log("Player_id: " + this.parent_id);
+			Crafty(this.parent_id).decrementMana(1);
 		},
 	}); 
 	/* end game components */
@@ -334,7 +316,7 @@ $(document).ready(function() {
 		
 		
 		var spells_toks = new Array();
-		var spell = 'shape 5, accelerate 1.51 5, accelerate 4.57 5';
+		var spell = 'shape 5, accelerate 1 5';
 
 		spells_toks = scan(spell);
 		
