@@ -262,7 +262,7 @@ $(document).ready(function() {
 		getName: function() {
 			return this.name; 
 		},
-		/* Precondidionts - spell_root != undefined */
+		/* Preconditions - spell_root != undefined */
 		realTimeSpellInterpreter: function(spell_root) {
 			var children = spell_root.get_children();
 			//for(var i = 0; i < children.length; i++) {
@@ -271,11 +271,7 @@ $(document).ready(function() {
 
 			var spell_name = children[0].get_lex_info();
 			var arguments = children.slice(1);
-			//log("Looking at " + spell_name + " with arguments ");
-			//for(i = 0; i < arguments.length; i++) {
-			//	log("Argument[" + i + "]: " + arguments[i].get_lex_info());
-			//}
-			var parameters = [this].concat(arguments);
+			//var parameters = [this].concat(arguments);
 			var the_spell = activate_library_spell(this, this.parent_id, spell_name, arguments);
 
 			log("Player_id: " + this.parent_id);
@@ -316,7 +312,7 @@ $(document).ready(function() {
 		
 		
 		var spells_toks = new Array();
-		var spell = 'shape 5, accelerate 1 5';
+		var spell = 'shape 10, accelerate 3 2';
 
 		spells_toks = scan(spell);
 		
