@@ -61,7 +61,7 @@ $(document).ready(function() {
 		}
 	};
 	
-	// pop_child - returns the node removed
+	// shift_child - returns the node removed
 	Syn_node.prototype.shift_child = function() {
 		if(this.children.length != 0) {
 			child = this.children.shift();
@@ -71,6 +71,13 @@ $(document).ready(function() {
 		else {
 			// throw an error
 			log(this.lex_name + " has no children.");
+		}
+	};
+
+	// unshift_child - returns the node removed
+	Syn_node.prototype.unshift_children = function(child_array) {
+		for(var i = child_array.length - 1; i >= 0; i--) {
+			this.children.unshift(child_array[i]);
 		}
 	};
 	

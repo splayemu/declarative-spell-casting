@@ -11,6 +11,10 @@ $(document).ready(function() {
 	*/
 	activate_library_spell = function(hostspell, player_id, name, arguments) {
 		spell_info = library_spells[name];
+		if(spell_info == undefined) {
+			log(name + " is not a valid library spell");
+			return 0;
+		}
 		var spell = spell_info['funct'];
 		var parameters = spell_info['params'];
 		//for(var i = 0; i < children.length; i++) {
@@ -24,6 +28,7 @@ $(document).ready(function() {
 		//}
 		// calculate manacost
 		spell(hostspell, arguments);
+		return 1;
 	};
 	
 	/* Library calls 
@@ -82,8 +87,9 @@ $(document).ready(function() {
 	var insert_library_spell = function (name, params, funct) {
 		var spell_info = {'params':params, 'funct':funct};
 		library_spells[name] = spell_info;
-		log("Inserting " + name + " paired with " + spell_info.toString());
+		log("Inserting library spell " + name + " paired with " + spell_info.toString());
 	}	
+
 	/* test spells */
 	var test_shape			= function (arguments) {
 		log("Shape is called");

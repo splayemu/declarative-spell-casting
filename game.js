@@ -18,6 +18,42 @@ $(document).ready(function() {
 		return size;
 	};
 
+
+	/* activate_player_spell	- looks up the player created spell and adds it to the spell tree
+		Inputs:	name		- the name of the spell
+			arguments	- the arguments of the spell
+
+		Desire behavior:	If it is executing in the spell layer (e.g. spell args, spell args, ...)
+						add the spell root to be executed before any other spells (similar to a stack push)
+					If it is a spell executed as an argument to another spell
+						the spell root needs to be added to place to be executed
+						create a temporary variable, call it return_val, to store the return value
+						return_val = spell	
+	*/
+
+	/* insert_player_spell 	- is a function that creates the spell object and adds it to the player_spells dictionary
+		Inputs:	name 		- the string containing the name of the spell
+			parameters	- a dictionary of the arguments and their types
+			spell_text	- the string containing the text of the spell
+
+	*/
+	insert_player_spell = function (name, params, spell_text) {
+		var spells_toks = scan(spell_text);	
+	/*	log("Starting SCAN");	
+		for(var i = 0; i < spells_toks.length;i++) {
+			log('tok[' + i + ']: ' + spells_toks[i].get_lex_name());
+		}
+		log("Ending SCAN\n"); */
+		
+		//log("Starting PARSE");
+		var root_node = parse(spells_toks);
+		//log("Ending PARSE\n");
+		var spell_info = {'params':params, 'funct':root_node};
+
+		player_spells[name] = spell_info;
+		log("Inserting player spell " + name + " paired with " + spell_info.toString());		
+	}
+
 	/* game components */
 	/* PlayerManager - Holds the required entities and values to run a player
 		
@@ -203,11 +239,12 @@ $(document).ready(function() {
 			spell_ast	- the abstract syntax tree of the spell
 			
 		Methods:
-			shape 						- makes the spell physical
+			shape 		- makes the spell physical
 			realTimeSpellInterpreter 	- 
-			
-				This guy will work as a small step interpreter. It will evaluate one spell cast at a time (separated by the commas).
-				Arguments: One spell_root
+				This guy will work as a small step interpreter. It will evaluate one spell cast at a time 
+				(separated by the commas).
+				
+				Inputs: One spell_root
 				
 				Psuedo Code:
 					Evaluate expressions in the arguments
@@ -226,6 +263,23 @@ $(document).ready(function() {
 					If there is another spell,
 						mana -= trivial_manacost
 						recur on next spell in the AST
+
+			activate_player_spell_spell	- looks up the player created spell and adds it to the spell tree
+				Inputs:	name		- the name of the spell
+					arguments	- the arguments of the spell
+
+				Desired behavior:	If it is executing in the spell layer (e.g. spell args, spell args, ...)
+								add the spell root to be executed before any other spells 
+								(similar to a stack push)
+
+			activate_player_spell_argument	- looks up the player created spell and 
+				Inputs: name
+					arguments
+
+				Desired behavior:	If it is a spell executed as an argument to another spell
+								the spell root needs to be added to place to be executed
+								create a temporary variable, call it return_val, to store the return value
+								return_val = spell
 	
 	*/
 	Crafty.c("Spell", {
@@ -272,10 +326,27 @@ $(document).ready(function() {
 			var spell_name = children[0].get_lex_info();
 			var arguments = children.slice(1);
 			//var parameters = [this].concat(arguments);
-			var the_spell = activate_library_spell(this, this.parent_id, spell_name, arguments);
-
+			var spell_success = activate_library_spell(this, this.parent_id, spell_name, arguments);
+			if(!spell_success) {
+				log("Trying the player spell library");
+				this.activate_player_spell_spell(spell_name, arguments);
+			}
 			log("Player_id: " + this.parent_id);
 			Crafty(this.parent_id).decrementMana(1);
+		},
+		activate_player_spell_spell: function(name, arguments) {
+			log("Trying to cast " + name);
+			var spell_info = player_spells[name];
+			if(spell_info == undefined) {
+				log(name + " is not a spell");
+				return;
+			}
+			var params = spell_info['params'];
+			// verify arguments == params
+			var spell_root = spell_info['funct'].copy();
+			log("Adding " + name + "'s root " + spell_root);
+			var spell_children = spell_root.get_children();
+			this.spell_ast.unshift_children(spell_children);
 		},
 	}); 
 	/* end game components */
@@ -310,11 +381,11 @@ $(document).ready(function() {
 		Crafty.init(600, 300);
 		Crafty.background('rgb(127,127,127)');	
 		
-		
-		var spells_toks = new Array();
-		var spell = 'shape 10, accelerate 3 2';
+		// test insert
+		insert_player_spell('fireball', {}, 'shape 10, accelerate 3 2'); 
+		var spell = 'fireball';
 
-		spells_toks = scan(spell);
+		var spells_toks = scan(spell);
 		
 		log("Starting SCAN");	
 		for(var i = 0; i < spells_toks.length;i++) {
@@ -325,9 +396,8 @@ $(document).ready(function() {
 		log("Starting PARSE");
 		var root_node = parse(spells_toks);
 		log("Ending PARSE\n");
-		
-		tree_str = root_node.toString();
-		log('traversal : ' + tree_str);
+
+		log('traversal : ' + root_node.toString());
 		// depth first traversal of the grammar tree
 
 		
