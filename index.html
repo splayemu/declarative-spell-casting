@@ -9,8 +9,45 @@
 		<script type="text/javascript" src="interpreter.js"></script>
 		<script type="text/javascript" src="game.js"></script>
 		<script type="text/javascript" src="spells.js"></script>
+		<link rel="stylesheet" type="text/css" href="style.css">
+		<script type="text/javascript">
+			jQuery(document).ready(function(){
 
+			});
+
+			$(function() {  
+			 // $('.error').hide();
+				$("#submit_btn").click(function() {  
+					var spell_text = $("input#spell_text").val();
+					//var spell_name = $("#spell_name").val();
+					//alert("Spell text: " + spell_text);
+					$("#spell_display_area").html('<h3>'+spell_text+'</h3>');
+					insert_player_spell('fireball', {}, 'shape 10, speedup');
+					return false; 
+				});  
+			}); 
+ 
+		</script>
 	</head>
 	<body>
+		<h1>Declarative Spell Casting</h1>
+		<div id="main_horizontal_column">
+			<div id="main_game_box">
+				<div id="game_location">
+					<div id="cr-stage"></div>
+				</div>
+			</div>
+			<div id="spell_library_box">
+				<div id="spell_input_area">
+					<h3> Enter Spell Text Here: </h3>
+					<input type="text" id="spell_input" name="spell_text" />
+					<!--<input type="text" id="spell_name" name="spell_name" /> -->
+					<input type="submit" name="submit" class="button" id="submit_btn" value="Add Spell" />
+				</div>
+				<div id="spell_display_area">
+					<h3>Spell Text Goes Here</h3>
+				</div>
+			</div>
+		</div>
 	</body>
 </html>

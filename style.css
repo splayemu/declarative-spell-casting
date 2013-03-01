@@ -1,0 +1,92 @@
+	body {
+		color:black;
+		background-color: #C2D6FF;
+		font-family: 'McLaren', serif;
+		font-size: 18px;
+	}
+	h1{
+		font-size: 46px;
+		font-family: 'Fanwood Text', serif;
+		text-align: center;
+	}
+	h3{
+		font-style: italic;
+		text-decoration: underline;
+				
+	}
+	a{
+		color:#000000;
+	}
+	a:visited{
+		color:#D8D8D8;
+	}
+    input[type=text]{
+        font-size:12px;
+        color:#666666;
+        background-color:#ffffff;
+        padding: 5px 5px 5px 5px;
+		position: relative;
+        width:50%;
+        height:50%;
+        border:1px solid #999999;
+		margin-left: 0%;
+    }
+	#main_horizontal_column{
+		background-color: #CCFFFF;
+		width: 1600px;
+		height: 650px;
+		top: 200px;
+		left: 25%;
+		position: fixed;
+		border-radius: 5px 5x 5px 5px;
+		margin-left: -400px;
+	}
+	#main_game_box {
+		float: left;
+		width: 50%;
+		height: 100%;
+		border-right: 2px solid #B4E6FF;
+		margin-right: -2px;
+	}
+	#cr-stage{
+		left: 10%;
+		top: 70px;
+	}
+	#spell_library_box {
+		float: right;
+		width: 50%;
+		height: 100%;
+		/*background-color: #F1F1F1; */
+		border-left: 1px solid #B4E6FF;
+		margin-left: -1px;
+	}
+	#spell_input_area {
+		float: left;
+		width: 50%;
+		/*height: 80%;*/
+		overflow:show;
+		border-right: 2px solid #B4E6FF;
+		margin-right: 2px;
+	}
+	#spell_display_area{
+		float: right;
+		text-align: left;
+		width: 50%;
+		height: 100%;
+		/*border-left: 1px solid #E8E8E8; */
+		margin-left: -1px;
+	}		
+/*	
+	#seperator{
+		width:1px;
+		border-left:1px solid #E8E8E8;
+		border-right:1px solid #E8E8E8;
+	} */
+		
+	ul{
+		list-style-type: none;
+		margin-left: 0px;
+		padding: 5px;
+	}
+
+			

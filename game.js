@@ -6,6 +6,12 @@ $(document).ready(function() {
 		}, 0);
 	}
 	
+	// Game constants
+	background_width = 600;
+	background_height = 400;
+	playable_width = 900;
+	playable_height = 600;
+	
 	player_spells	= {};
 	library_spells	= {};
 	
@@ -163,37 +169,6 @@ $(document).ready(function() {
 
 
 	/* game components */
-	/*
-	Crafty.c("Projectile", {
-		init: function() {
-			this.requires('2D');
-			this.requires('Collision');
-			//this.color(this.color);
-		},
-		
-		// constructor for the projectile
-		projectile: function(size, xStartingPos, yStartingPos, direction, speed) {
-			this.attr({ x: xStartingPos, y: yStartingPos, w: size, h: size, 
-				dX: Math.sin(direction) * speed, //Crafty.math.randomInt(2, 5) * xSpeed, 
-				dY: Math.cos(direction) * speed}) //Crafty.math.randomInt(2, 5) * ySpeed})
-			.bind('EnterFrame', function () {
-				//hit floor or roof
-				if (this.y <= 0 || this.y >= 290)
-					this.destroy();
-
-				if (this.x <= 0 || this.x >= 590)
-					this.destroy();
-
-				this.x += this.dX;
-				this.y += this.dY;
-			})
-			//.onHit('Player1', function () {
-			//	this.dX *= -1;
-			//})
-			return this;
-		}
-
-	}); */
 	
 	Crafty.c("PhysicalSpell", {
 		init: function() {
@@ -208,10 +183,10 @@ $(document).ready(function() {
 			.color(color)
 			.bind('EnterFrame', function () {
 				//hit floor or roof
-				if (this.y <= 0 || this.y >= 290)
+				if (this.y <= 0 || this.y >= (playable_height - 10))
 					this.destroy();
 
-				if (this.x <= 0 || this.x >= 590)
+				if (this.x <= 0 || this.x >= (playable_width - 10))
 					this.destroy();
 
 				this.x += this.dX;
@@ -378,11 +353,12 @@ $(document).ready(function() {
 
 	
 	function init() {
-		Crafty.init(600, 300);
+		Crafty.init(background_width, background_height);
 		Crafty.background('rgb(127,127,127)');	
 		
 		// test insert
-		insert_player_spell('fireball', {}, 'shape 10, accelerate 3 2'); 
+		/*insert_player_spell('fireball', {}, 'shape 10, speedup');*/ 
+		insert_player_spell('speedup', {}, 'accelerate 3 2, speedup');  
 		var spell = 'fireball';
 
 		var spells_toks = scan(spell);
