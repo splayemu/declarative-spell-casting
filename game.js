@@ -54,7 +54,7 @@ $(document).ready(function() {
 		//log("Starting PARSE");
 		var root_node = parse(spells_toks);
 		//log("Ending PARSE\n");
-		var spell_info = {'params':params, 'funct':root_node};
+		var spell_info = {'params':params, 'funct':root_node, 'spell_text':spell_text};
 
 		player_spells[name] = spell_info;
 		log("Inserting player spell " + name + " paired with " + spell_info.toString());		
@@ -161,7 +161,7 @@ $(document).ready(function() {
 		decrementMana: function(mana_cost) {
 			this.mana -= mana_cost;
 			// update manabar
-			log("Decrementing mana to: " + this.mana + " with the amount of " + mana_cost);
+			//log("Decrementing mana to: " + this.mana + " with the amount of " + mana_cost);
 			this.manabar.trigger("ChangeMana", this.mana);
 		}
 
@@ -306,7 +306,7 @@ $(document).ready(function() {
 				log("Trying the player spell library");
 				this.activate_player_spell_spell(spell_name, arguments);
 			}
-			log("Player_id: " + this.parent_id);
+			//log("Player_id: " + this.parent_id);
 			Crafty(this.parent_id).decrementMana(1);
 		},
 		activate_player_spell_spell: function(name, arguments) {
@@ -357,9 +357,9 @@ $(document).ready(function() {
 		Crafty.background('rgb(127,127,127)');	
 		
 		// test insert
-		insert_player_spell('fireball', {}, 'shape 10, speedup');
-		insert_player_spell('speedup', {}, 'accelerate 3 2, speedup');  
-		var spell = 'shape 10, accelerate (shape 10)';
+		insert_player_spell('fireball', {}, 'shape 10, accelerate 3 2');
+		//insert_player_spell('speedup', {}, 'accelerate 3 2, speedup');  
+		var spell = 'fireball';
 
 		var spells_toks = scan(spell);
 		
