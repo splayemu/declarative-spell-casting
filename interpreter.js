@@ -250,16 +250,17 @@ $(document).ready(function() {
 		// read through the token list
 		var current_cast = new Array();
 		for(var i = 0; i < token_list.length; i++) {
-			i += parse_spell_with_arguments(token_list, i, current_parent);			
+			var tok_eos_m    = token_list[i].get_lex_name().match(/TOK_EOS/);
+			if(tok_eos_m == null)	
+				i += parse_spell_with_arguments(token_list, i, current_parent, 0);		
 		}
 		return root;
 	};	
 
 	/* parse_spell_with_arguments - takes in a token_list and looks for an ident and arguments 
-		Output - will output a token list
-		ident [argument ...]
+		Output - returns how far it traversed the token list
 	*/
-	parse_spell_with_arguments = function(token_list, index, current_parent) {
+	parse_spell_with_arguments = function(token_list, index, current_parent, paren_layer) {
 		var counter = 0;
 		// The first token must be an identifier or a library spell
 		//var tok_shape_m = token_list[i].get_lex_name().match(/TOK_SHAPE/);
@@ -267,7 +268,9 @@ $(document).ready(function() {
 		//if (tok_shape_m != null) {
 		//	current_cast.push(token_list[i]);
 		//}
+		log("Trying to add spell cast of name: " + token_list[index + counter].get_lex_name());
 		if (tok_ident_m != null) {
+
 			var spell_with_arguments = new Syn_node ('TOK_SPELL', 'spell_with_arguments');
 			current_parent.adopt(spell_with_arguments);
 			current_parent = spell_with_arguments;
@@ -278,22 +281,47 @@ $(document).ready(function() {
 			log("Error. casting a spell must start with a library spell or a declared spell.");
 			return;
 		}
-		/* Argument detecter goes until a ',' is found */
+		/* Argument detecter goes until a ',' or eos is found 
+			- Needs to detect (spell arguments) and identifiers as well
+		*/
 		for(; counter < token_list.length; counter++) {
+			var tok_ident_m  = token_list[index + counter].get_lex_name().match(/TOK_IDENT/);
 			var tok_number_m = token_list[index + counter].get_lex_name().match(/TOK_NUMBER/);
 			var tok_comma_m  = token_list[index + counter].get_lex_name().match(/,/);		
 			var tok_eos_m    = token_list[index + counter].get_lex_name().match(/TOK_EOS/);	
+			var tok_lp_m     = token_list[index + counter].get_lex_name().match(/\(/);	
+			var tok_rp_m     = token_list[index + counter].get_lex_name().match(/\)/);
 			//if (tok_shape_m != null) {
 			//	current_cast.push(token_list[i]);
 			//}
-			if (tok_number_m != null) {
+			if (tok_ident_m != null) {
 				current_parent.adopt(token_list[index + counter]);
+			} 
+			else if (tok_number_m != null) {
+				current_parent.adopt(token_list[index + counter]);
+			}
+			/* recur on left paranthesis
+				needs to increment the counter, change the current parent, and increment the paren_layer
+			*/
+			else if (tok_lp_m != null) {
+				paren_layer++;
+				log("Recurring on parse_spell_with_arguments with " + token_list[index + counter].get_lex_name());
+				counter += parse_spell_with_arguments(token_list, index + counter + 1, current_parent, paren_layer);
+			} 
+			else if (tok_rp_m != null) {
+				log("Paren layer = " + paren_layer);
+				if(paren_layer <= 0) {
+					log("Error. Unbalanced Parens");
+					return;				
+				}
+				paren_layer--;
+				break;
 			} 	
 			else if (tok_comma_m != null || tok_eos_m != null) {
 				break;
 			}			
 			else { // throw an error
-				log("Error. Arguments must be numbers.");
+				log("Error. Arguments must be numbers, parameters, or spells.");
 				return;
 			}
 

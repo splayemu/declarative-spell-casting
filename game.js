@@ -357,9 +357,9 @@ $(document).ready(function() {
 		Crafty.background('rgb(127,127,127)');	
 		
 		// test insert
-		/*insert_player_spell('fireball', {}, 'shape 10, speedup');*/ 
+		insert_player_spell('fireball', {}, 'shape 10, speedup');
 		insert_player_spell('speedup', {}, 'accelerate 3 2, speedup');  
-		var spell = 'fireball';
+		var spell = 'shape 10, accelerate (shape 10)';
 
 		var spells_toks = scan(spell);
 		
