@@ -143,7 +143,7 @@ $(document).ready(function() {
 
 	// other keywords
 	//operator_list['TOK_CURSOR'] 	= /cursor/;
-	//tok_list['TOK_FIRE'] 	= /fire/;
+	//operator_list['TOK_FIRE'] 	= /fire/;
 
 
 	/* scan - scans the string into tokens
@@ -284,7 +284,15 @@ $(document).ready(function() {
 						,
 		name arguments     name arguments
 	
-	
+	spell 			::= identifier arguments
+
+	arguments		::= expr
+					| arguments expr
+			
+	expr			::= ident
+					| number
+					| (spell)	
+					| (expr Op expr)
 	
 	*/
 	
@@ -331,7 +339,11 @@ $(document).ready(function() {
 			return;
 		}
 		/* Argument detecter goes until a ',' or eos is found 
-			- Needs to detect (spell arguments) and identifiers as well
+			- Each argument is an expr
+				expr	::= ident
+					| number
+					| (spell)	
+					| (expr Op expr)
 		*/
 		for(; counter < token_list.length; counter++) {
 			var tok_ident_m  = token_list[index + counter].get_lex_name().match(/TOK_IDENT/);

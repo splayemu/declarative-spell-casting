@@ -284,7 +284,15 @@ $(document).ready(function() {
 						,
 		name arguments     name arguments
 	
-	
+	spell 			::= identifier arguments
+
+	arguments		::= expr
+					| arguments expr
+			
+	expr			::= ident
+					| number
+					| (spell)	
+					| (expr Op expr)
 	
 	*/
 	
@@ -331,7 +339,11 @@ $(document).ready(function() {
 			return;
 		}
 		/* Argument detecter goes until a ',' or eos is found 
-			- Needs to detect (spell arguments) and identifiers as well
+			- Each argument is an expr
+				expr	::= ident
+					| number
+					| (spell)	
+					| (expr Op expr)
 		*/
 		for(; counter < token_list.length; counter++) {
 			var tok_ident_m  = token_list[index + counter].get_lex_name().match(/TOK_IDENT/);
@@ -350,6 +362,8 @@ $(document).ready(function() {
 				current_parent.adopt(token_list[index + counter]);
 			}
 			/* recur on left paranthesis
+				Things to think about:
+					How can you differentiate between a (expr Op expr) and a (spell arguments)
 				needs to increment the counter, change the current parent, and increment the paren_layer
 			*/
 			else if (tok_lp_m != null) {
