@@ -11,15 +11,13 @@ sequence 		::= spell
 				| sequence, spell
 
 spell 			::= identifier arguments
-				| (spell)
 
-arguments		::= argument
-				| arguments argument
+arguments		::= (expr)
+				| arguments (expr)
 			
-argument		::= expr
-
 expr			::= expr Op expr
 				| True | False
-				| Int
-				| Float
-				| void
+				| ident
+				| number
+				| (spell)	
+				| (expr)

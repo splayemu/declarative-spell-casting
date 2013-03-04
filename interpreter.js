@@ -113,19 +113,48 @@ $(document).ready(function() {
 	
 	
 	// TOKEN_LIST - this should be an ordered list of tuples token_names:pattern_match
+	/* keywords needed to parse expressions
+				Binary Operators
+				+
+				-
+				*
+				/
+				%
+				==
+				!=
+				>
+				>=
+				<
+				<=
+				
+				Extra operators:
+				sqrt
+				^
+				
+				Extra keywords:
+				pi
+				cursor
+	*/
 	//   TOK_CURSOR - breaks down into the cursor_x and cursor_y
 	//   TOK_FIRE	- breaks down into the fire element
-	var tok_list = new Array();
-	tok_list[0] = ['TOK_CURSOR',/cursor/];
-	tok_list[1] = ['TOK_FIRE',/fire/];
-	tok_list[1] = ['TOK_SHAPE',/shape/];
-	tok_list[1] = ['TOK_MOVE',/move/];
-	tok_list[2] = [')', /\)/];
-	tok_list[3] = ['(', /\(/];
-	tok_list[2] = [',', /,/];
+	var operator_list = {};
+	// binary operators
+	operator_list[/\+/] 	= '+';
+	operator_list[/-/] 	= '-';
+	operator_list[/\*/] 	= '*';
+	operator_list[/\//] 	= '/';
+	operator_list[/%/] 	= '%';
+	operator_list[/==/] 	= '==';
+	operator_list[/!=/] 	= '!=';
+	operator_list[/>/] 	= '>';
+	operator_list[/>=/] 	= '>=';
+	operator_list[/</] 	= '<';
+	operator_list[/<=/] 	= '<=';
+	operator_list[/(\+|-|\*|\/|%|==|!=|>|<|>=|<=)/] = 'bops';
+	// other keywords
+	//operator_list['TOK_CURSOR'] 	= /cursor/;
+	//tok_list['TOK_FIRE'] 	= /fire/;
 
-	// SPELL I AM TRYING TO PARSE:
-	//	shape fire, accelerate cursor 5
 
 	/* scan - scans the string into tokens
 	 * Input: A string
@@ -136,33 +165,41 @@ $(document).ready(function() {
 		var found_tok_list = new Array();
 		// cur_tok maintains the token in the making
 		var cur_tok = '';
+		var cur_operator = '';
 		spell = spell + ' ';
 		for (var i = 0; i < spell.length; i++) {
 			cur_tok = cur_tok + spell[i];
 			
-			// keywords first - each of these refresh cur_tok when chosen
-		/*
-			var tok_cursor_m = cur_tok.match(/cursor/);
-			if (tok_cursor_m != null) {
-				found_tok_list.push(new Syn_node ('TOK_CURSOR', ''));
-				cur_tok = '';
+			log("Looking at: " + cur_tok);
+			var operator_pattern = /(\+|-|\*|\/|%|==|!=|>|<|>=|<=)/;
+			//log("Comparing " + keyword_pattern + " to " + cur_tok);
+			var tok_operator_m = cur_tok.match(operator_pattern);
+			if (tok_operator_m != null && spell[i].match(/[+*-\/%><!=]/)) {
+				log("Looking at " + cur_tok + " and " + tok_operator_m);
+				cur_operator = cur_tok;
+				continue;
+			}		
+			else if (cur_operator.length > 0) { // and it does not match an operator character
+				log("Matched bops: " + cur_operator + " with cur_tok:" + cur_tok);
+				found_tok_list.push(new Syn_node (cur_operator, ''));
+				cur_operator = '';
+				cur_tok = spell[i];
 				continue;
 			}
-			var tok_fire_m = cur_tok.match(/fire/);
-			if (tok_fire_m != null) {
-				found_tok_list.push(new Syn_node ('TOK_FIRE', ''));
-				cur_tok = '';
-				continue;
-			}
-			var tok_shape_m = cur_tok.match(/shape/);
-			if (tok_shape_m != null) {
-				found_tok_list.push(new Syn_node ('TOK_SHAPE', ''));
-				cur_tok = '';
-				continue;
-			} 
-		*/
-			//log("Looking at: " + cur_tok);
-			var tokens_to_add = new Array();
+			// Look through all the keywords
+			/*
+			for(var keyword_pattern in tok_list) {
+				log("Comparing " + keyword_pattern + " to " + cur_tok);
+				var tok_keyword_m = cur_tok.match(keyword_pattern);
+				if (tok_keyword_m != null) {
+					log("Matching " + tok_list[keyword_pattern] + " with " + cur_tok);
+					found_tok_list.push(new Syn_node (tok_list[keyword_pattern], ''));
+					cur_tok = '';
+					continue;
+				}			
+			} */
+			
+			var tokens_to_add = new Array();	
 			
 			// grammar punctuation - these need to break up the words to detect for identifiers
 			// for example - if a comma, paren, or whitespace has arrived but the token has not been identified,
@@ -189,7 +226,9 @@ $(document).ready(function() {
 			// whitespace pushes no character
 			// identifier identifier does not catch
 			else if (tok_ws_m != -1) {
+				log("whitespace found");
 				cur_tok = cur_tok.slice(0,tok_ws_m);
+				log("cur_tok " + cur_tok);
 				//new_word = true;
 			}	
 			else {continue;}
@@ -215,7 +254,7 @@ $(document).ready(function() {
 			// catch alls
 			var err_catch_all_m = cur_tok.match(/[^\0]+/);
 			if (err_catch_all_m != null) {
-				tokens_to_add.unshift('ERR_TOKEN, ' + err_catch_all_m[0]);
+				tokens_to_add.unshift(new Syn_node ('ERR_TOKEN, ' + err_catch_all_m[0]));
 				cur_tok = '';		
 			}
 			//log("Size of tokens to add: " + tokens_to_add.length);
