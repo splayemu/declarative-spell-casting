@@ -35,10 +35,10 @@
 		background-color: #CCFFFF;
 		width: 1600px;
 		height: 650px;
-		top: 200px;
+		top: 100px;
 		left: 25%;
 		position: fixed;
-		border-radius: 5px 5x 5px 5px;
+		border-radius: 5px 5px 5px 5px;
 		margin-left: -400px;
 	}
 	#main_game_box {

@@ -135,25 +135,15 @@ $(document).ready(function() {
 				pi
 				cursor
 	*/
-	//   TOK_CURSOR - breaks down into the cursor_x and cursor_y
-	//   TOK_FIRE	- breaks down into the fire element
+
 	var operator_list = {};
-	// binary operators
-	operator_list[/\+/] 	= '+';
-	operator_list[/-/] 	= '-';
-	operator_list[/\*/] 	= '*';
-	operator_list[/\//] 	= '/';
-	operator_list[/%/] 	= '%';
-	operator_list[/==/] 	= '==';
-	operator_list[/!=/] 	= '!=';
-	operator_list[/>/] 	= '>';
-	operator_list[/>=/] 	= '>=';
-	operator_list[/</] 	= '<';
-	operator_list[/<=/] 	= '<=';
+
+	// binary operators 
 	operator_list[/(\+|-|\*|\/|%|==|!=|>|<|>=|<=)/] = 'bops';
+
 	// other keywords
 	//operator_list['TOK_CURSOR'] 	= /cursor/;
-	//tok_list['TOK_FIRE'] 	= /fire/;
+	//operator_list['TOK_FIRE'] 	= /fire/;
 
 
 	/* scan - scans the string into tokens
@@ -169,37 +159,9 @@ $(document).ready(function() {
 		spell = spell + ' ';
 		for (var i = 0; i < spell.length; i++) {
 			cur_tok = cur_tok + spell[i];
-			
-			log("Looking at: " + cur_tok);
-			var operator_pattern = /(\+|-|\*|\/|%|==|!=|>|<|>=|<=)/;
-			//log("Comparing " + keyword_pattern + " to " + cur_tok);
-			var tok_operator_m = cur_tok.match(operator_pattern);
-			if (tok_operator_m != null && spell[i].match(/[+*-\/%><!=]/)) {
-				log("Looking at " + cur_tok + " and " + tok_operator_m);
-				cur_operator = cur_tok;
-				continue;
-			}		
-			else if (cur_operator.length > 0) { // and it does not match an operator character
-				log("Matched bops: " + cur_operator + " with cur_tok:" + cur_tok);
-				found_tok_list.push(new Syn_node (cur_operator, ''));
-				cur_operator = '';
-				cur_tok = spell[i];
-				continue;
-			}
-			// Look through all the keywords
-			/*
-			for(var keyword_pattern in tok_list) {
-				log("Comparing " + keyword_pattern + " to " + cur_tok);
-				var tok_keyword_m = cur_tok.match(keyword_pattern);
-				if (tok_keyword_m != null) {
-					log("Matching " + tok_list[keyword_pattern] + " with " + cur_tok);
-					found_tok_list.push(new Syn_node (tok_list[keyword_pattern], ''));
-					cur_tok = '';
-					continue;
-				}			
-			} */
-			
-			var tokens_to_add = new Array();	
+			var tokens_to_add = new Array();
+	
+			//log("Looking at: " + cur_tok);	
 			
 			// grammar punctuation - these need to break up the words to detect for identifiers
 			// for example - if a comma, paren, or whitespace has arrived but the token has not been identified,
@@ -208,7 +170,56 @@ $(document).ready(function() {
 			var tok_lp_m = cur_tok.search(/\(/);
 			var tok_rp_m = cur_tok.search(/\)/);
 			var tok_ws_m = cur_tok.search(/\s/);
-			if (tok_comma_m != -1) {
+			var operator_pattern = /(\+|-|\*|\/|%|==|!=|>|<|>=|<=)/;
+			var tok_operator_m = cur_tok.search(operator_pattern);
+			/* 
+				NOTE: Sketchy implementation of the operators
+
+				Code Flow:
+				If there is an operator
+					deal with it
+				else if there is punctuation
+					deal with it
+				else // an identifier or a number is being built
+					continue
+			*/ 
+			/*
+				If cur_tok matches an operator and finds an operator character, 
+					split cur_tok between the previous value and the operator
+			*/
+			if (tok_operator_m != -1 && spell[i].match(/[+*-\/%><!=]/)) {
+
+				cur_operator = cur_tok.slice(tok_operator_m);
+				cur_tok = cur_tok.slice(0,tok_operator_m);
+				log("Splitting token: " + cur_tok + " and operator: " + cur_operator);
+			}
+			/*	Else If there is an operator
+					check if the operator + the new character is a valid operator
+					if it is valid
+						operator = new_operator
+					else
+						redo the character after this round
+
+					cur_operator = cur_tok = ''
+					push the operator_tok
+			*/		
+			else if (cur_operator.length > 0) { // and it does not match an operator character
+				log("Operator " + cur_operator + " with possible addition of " + spell[i]);
+				var test_new_operator = cur_operator + spell[i];
+				var test_operator_m = test_new_operator.search(/(\+|-|\*|\/|%|==|!=|>|<|>=|<=)$/);
+				if(test_operator_m != -1) {
+					cur_operator = test_new_operator;
+				}
+				else {
+					// if it is not a valid operator character, have the scanner move over the character again
+					i--;			
+				}
+				log("Matched bops: " + cur_operator);
+				tokens_to_add.push(new Syn_node (cur_operator, ''));
+				cur_operator = '';
+				cur_tok = '';
+			}
+			else if (tok_comma_m != -1) {
 				//log("Found comma");
 				tokens_to_add.push(new Syn_node (',', ''));
 				cur_tok = cur_tok.slice(0,tok_comma_m);
@@ -226,15 +237,14 @@ $(document).ready(function() {
 			// whitespace pushes no character
 			// identifier identifier does not catch
 			else if (tok_ws_m != -1) {
-				log("whitespace found");
 				cur_tok = cur_tok.slice(0,tok_ws_m);
-				log("cur_tok " + cur_tok);
+				log("whitespace found with cur_tok: " + cur_tok);
 				//new_word = true;
 			}	
 			else {continue;}
 			
 			// indentifiers and numbers
-			var tok_ident_m = cur_tok.match(/[a-zA-Z_][a-zA-Z0-9_]*/);
+			var tok_ident_m = cur_tok.match(/^[a-zA-Z_][a-zA-Z0-9_]*$/);
 			if (tok_ident_m != null) {
 				//if(new_word) 
 				//log("Found ident");
@@ -243,10 +253,10 @@ $(document).ready(function() {
 				tokens_to_add.unshift(new_node);
 				cur_tok = '';
 			}	
-			var tok_number_m = cur_tok.match(/-?[0-9.]+/);
+			var tok_number_m = cur_tok.match(/^-?[0-9.]+$/);
 			if (tok_number_m != null) {
 				var new_node = new Syn_node ('TOK_NUMBER', tok_number_m[0])
-				//log('tok[new_node]: ' + new_node.get_lex_name());	
+				log('adding number ' + cur_tok);	
 				//found_tok_list.splice(found_tok_list.length - 1, 0, new_node);
 				tokens_to_add.unshift(new_node);
 				cur_tok = '';
