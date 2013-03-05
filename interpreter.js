@@ -118,23 +118,28 @@ $(document).ready(function() {
 	
 	// TOKEN_LIST - this should be an ordered list of tuples token_names:pattern_match
 	/* keywords needed to parse expressions
-				Binary Operators
+				Algebraic Binary Operators
 				+
 				-
 				*
 				/
 				%
+
+				Boolean Binary Operators
 				==
 				!=
 				>
 				>=
 				<
 				<=
-				
+				and
+				or
+
 				Extra operators:
 				sqrt
 				^
-				
+				!
+
 				Extra keywords:
 				pi
 				cursor
@@ -321,16 +326,15 @@ $(document).ready(function() {
 	/* parse_spell_with_arguments - takes in a token_list and looks for an ident and arguments 
 		Output - returns how far it traversed the token list
 	*/
-	parse_spell_with_arguments = function(token_list, index, current_parent) {
+	parse_spell_with_arguments = function(token_list, index, current_parent, paren_layer) {
 		var counter = 0;
-		var paren_layer = 0;
 		// The first token must be an identifier or a library spell
 		//var tok_shape_m = token_list[i].get_lex_name().match(/TOK_SHAPE/);
 		var tok_ident_m = token_list[index + counter].get_lex_name().match(/TOK_IDENT/);
 		//if (tok_shape_m != null) {
 		//	current_cast.push(token_list[i]);
 		//}
-		log("Trying to add spell cast of name: " + token_list[index + counter].get_lex_name());
+		log("Trying to add spell cast of name: " + token_list[index + counter].get_lex_info());
 		if (tok_ident_m != null) {
 
 			var spell_with_arguments = new Syn_node ('TOK_SPELL', 'spell_with_arguments');
@@ -358,6 +362,7 @@ $(document).ready(function() {
 					counter += parse_spell_with_arguments
 		*/
 		for(; counter < token_list.length; counter++) {
+			log("parse_spell_with_arguments: looking at " + token_list[index + counter]);
 			var tok_ident_m  = token_list[index + counter].get_lex_name().match(/TOK_IDENT/);
 			var tok_number_m = token_list[index + counter].get_lex_name().match(/TOK_NUMBER/);
 			var tok_comma_m  = token_list[index + counter].get_lex_name().match(/,/);		
@@ -367,7 +372,7 @@ $(document).ready(function() {
 			//if (tok_shape_m != null) {
 			//	current_cast.push(token_list[i]);
 			//}
-			log("parse_spell_with_arguments: looking at " + token_list[index + counter]);
+
 			if (tok_ident_m != null) {
 				current_parent.adopt(token_list[index + counter]);
 			} 
@@ -388,7 +393,7 @@ $(document).ready(function() {
 				}
 				else {
 					log("Recurring on parse_spell_with_arguments with " + token_list[index + counter - 1].get_lex_name());
-					counter += parse_spell_with_arguments(token_list, index + counter, current_parent);
+					counter += parse_spell_with_arguments(token_list, index + counter, current_parent, paren_layer);
 				}
 			} 
 			else if (tok_rp_m != null) {
@@ -471,7 +476,7 @@ $(document).ready(function() {
 			}
 			else {
 				log("Recurring on parse_spell_with_arguments with " + token_list[index + counter].get_lex_name());
-				counter += parse_spell_with_arguments(token_list, index + counter + 1, operator_node);
+				counter += parse_spell_with_arguments(token_list, index + counter, operator_node, paren_layer);
 			}			
 		}
 		// otherwise add the single token and increment the counter
@@ -513,7 +518,7 @@ $(document).ready(function() {
 			}
 			else {
 				log("Recurring on parse_spell_with_arguments with " + token_list[index + counter].get_lex_name());
-				counter += parse_spell_with_arguments(token_list, index + counter, operator_node);
+				counter += parse_spell_with_arguments(token_list, index + counter, operator_node, paren_layer);
 			}			
 		}
 		// otherwise add the single token and increment the counter
@@ -537,7 +542,7 @@ $(document).ready(function() {
 			log("Parse Error: Expressions are in this format: (expr Op expr)");
 			return token_list.length;		
 		}
-		counter++;
+		//counter++;
 		current_parent.adopt(operator_node);
 		
 		log("parse_operator_expression: sucessfully parsed the operator expression.");

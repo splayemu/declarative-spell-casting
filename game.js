@@ -9,8 +9,8 @@ $(document).ready(function() {
 	// Game constants
 	background_width = 600;
 	background_height = 400;
-	playable_width = 900;
-	playable_height = 600;
+	playable_width = 600;
+	playable_height = 400;
 	
 	player_spells	= {};
 	library_spells	= {};
