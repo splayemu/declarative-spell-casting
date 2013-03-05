@@ -15,9 +15,7 @@ spell 			::= identifier arguments
 arguments		::= (expr)
 				| arguments (expr)
 			
-expr			::= expr Op expr
-				| True | False
-				| ident
+expr			::= ident
 				| number
 				| (spell)	
-				| (expr)
+				| (expr Op expr)

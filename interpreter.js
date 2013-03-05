@@ -92,7 +92,11 @@ $(document).ready(function() {
 	Syn_node.prototype.get_children = function() {
 		return this.children;
 	};
-
+	
+	Syn_node.prototype.set_lex_name = function(lex_name) {
+		this.lex_name = lex_name;
+	};
+	
 	Syn_node.prototype.toString = function() {
 		log('Node: ' + this.lex_name);
 		var str = '';
@@ -317,8 +321,9 @@ $(document).ready(function() {
 	/* parse_spell_with_arguments - takes in a token_list and looks for an ident and arguments 
 		Output - returns how far it traversed the token list
 	*/
-	parse_spell_with_arguments = function(token_list, index, current_parent, paren_layer) {
+	parse_spell_with_arguments = function(token_list, index, current_parent) {
 		var counter = 0;
+		var paren_layer = 0;
 		// The first token must be an identifier or a library spell
 		//var tok_shape_m = token_list[i].get_lex_name().match(/TOK_SHAPE/);
 		var tok_ident_m = token_list[index + counter].get_lex_name().match(/TOK_IDENT/);
@@ -344,6 +349,13 @@ $(document).ready(function() {
 					| number
 					| (spell)	
 					| (expr Op expr)
+					
+			- Upon reaching an open paren
+				contains_operators?
+				if it contains an operator
+					counter += parse_operator_expression
+				else
+					counter += parse_spell_with_arguments
 		*/
 		for(; counter < token_list.length; counter++) {
 			var tok_ident_m  = token_list[index + counter].get_lex_name().match(/TOK_IDENT/);
@@ -355,6 +367,7 @@ $(document).ready(function() {
 			//if (tok_shape_m != null) {
 			//	current_cast.push(token_list[i]);
 			//}
+			log("parse_spell_with_arguments: looking at " + token_list[index + counter]);
 			if (tok_ident_m != null) {
 				current_parent.adopt(token_list[index + counter]);
 			} 
@@ -368,13 +381,20 @@ $(document).ready(function() {
 			*/
 			else if (tok_lp_m != null) {
 				paren_layer++;
-				log("Recurring on parse_spell_with_arguments with " + token_list[index + counter].get_lex_name());
-				counter += parse_spell_with_arguments(token_list, index + counter + 1, current_parent, paren_layer);
+				counter++;
+				if(contains_operators(token_list, index + counter)) {
+					log("Recurring on parse_operator_expression starting at: " + token_list[index + counter]);
+					counter += parse_operator_expression(token_list, index + counter, current_parent);
+				}
+				else {
+					log("Recurring on parse_spell_with_arguments with " + token_list[index + counter - 1].get_lex_name());
+					counter += parse_spell_with_arguments(token_list, index + counter, current_parent);
+				}
 			} 
 			else if (tok_rp_m != null) {
 				log("Paren layer = " + paren_layer);
 				if(paren_layer <= 0) {
-					log("Error. Unbalanced Parens");
+					log("Parse Error: Unbalanced Parens");
 					return;				
 				}
 				paren_layer--;
@@ -384,11 +404,143 @@ $(document).ready(function() {
 				break;
 			}			
 			else { // throw an error
-				log("Error. Arguments must be numbers, parameters, or spells.");
+				log("Parse Error: Arguments must be numbers, parameters, or spells.");
 				return;
 			}
 
 		}
+		return counter;
+	}
+	var contains_operators = function(token_list, index) {
+		var paren_layer = 1;
+		for(;index < token_list.length; index++) {
+			var tok_operator_m  = token_list[index].get_lex_name().match(/(\+|-|\*|\/|%|==|!=|>|<|>=|<=)/);
+			var tok_comma_m 	= token_list[index].get_lex_name().match(/,/);		
+			var tok_eos_m    	= token_list[index].get_lex_name().match(/TOK_EOS/);	
+			var tok_lp_m     	= token_list[index].get_lex_name().match(/\(/);	
+			var tok_rp_m     	= token_list[index].get_lex_name().match(/\)/);	
+
+			if (tok_operator_m != null) {
+				//log("contains_operators: Found an operator");
+				return true;
+			}
+			else if (tok_lp_m != null) {
+				paren_layer++;
+				//log("contains_operators: Found a left paren");
+			} 
+			else if (tok_rp_m != null) {
+				//log("contains_operators: Paren layer = " + paren_layer);
+				if(paren_layer <= 0) {
+					//log("contains_operators: Found ending paren");
+					return false;				
+				}
+				paren_layer--;
+			} 	
+			else if (tok_comma_m != null || tok_eos_m != null) {
+				//log("contains_operators: Found some weird shit");
+				return false;
+			}						
+		}
+	}
+	
+	/* parse_operater_expression - looks at operator expression and creates a parse tree
+		
+		Inputs: 
+			token_list		- the list of tokens
+			index			- the list pointer
+			current_parent	- the parent of the tree to be made
+			
+		Outputs: 
+			counter 		- amount of the token_list incremented
+	*/
+	var parse_operator_expression = function(token_list, index, current_parent) {
+		var counter = 0;
+		var paren_layer = 1;
+		var operator_node = new Syn_node ('operator', '');
+		
+		// look at LHS of the operator expression
+		log("parse_operator_expression: LHS looking at " + token_list[index + counter].get_lex_name());
+		var tok_lp_m = token_list[index + counter].get_lex_name().match(/\(/);
+		// recursively look at the LHS if it is surrounded by parenthesis
+		if(tok_lp_m != null) {
+			paren_layer++;
+			counter++;
+			if(contains_operators(token_list, index + counter)) {
+				log("Recurring on parse_operator_expression starting at: " + token_list[index + counter]);
+				counter += parse_operator_expression(token_list, index + counter, operator_node);
+			}
+			else {
+				log("Recurring on parse_spell_with_arguments with " + token_list[index + counter].get_lex_name());
+				counter += parse_spell_with_arguments(token_list, index + counter + 1, operator_node);
+			}			
+		}
+		// otherwise add the single token and increment the counter
+		else {
+			log("parse_operator_expression: LHS: not a lp");
+			var tok_ident_m  = token_list[index + counter].get_lex_name().match(/TOK_IDENT/);
+			var tok_number_m = token_list[index + counter].get_lex_name().match(/TOK_NUMBER/);
+			// check if its an ident or a number
+			if(tok_ident_m == null && tok_number_m == null) {
+				log("Parse Error: Expressions are in this format: (expr Op expr)");
+				return token_list.length;
+			}
+			operator_node.adopt(token_list[index + counter]);
+			counter++;
+		}
+
+		// look at the operator
+		log("parse_operator_expression: OP looking at " + token_list[index + counter].get_lex_name());
+		var tok_operator_m  = token_list[index + counter].get_lex_name().match(/(\+|-|\*|\/|%|==|!=|>|<|>=|<=)/);
+		if(tok_operator_m != null) {
+			operator_node.set_lex_name(token_list[index + counter]);
+			counter++;
+		}
+		else {
+			log("Parse Error: Expressions are in this format: (expr Op expr)");
+			return token_list.length;
+		}
+		
+		// look at RHS of the operator expression
+		log("parse_operator_expression: RHS looking at " + token_list[index + counter].get_lex_name());
+		tok_lp_m = token_list[index + counter].get_lex_name().match(/\(/);
+		// recursively look at the LHS if it is surrounded by parenthesis
+		if(tok_lp_m != null) {
+			paren_layer++;
+			counter++;
+			if(contains_operators(token_list, index + counter)) {
+				log("Recurring on parse_operator_expression starting at: " + token_list[index + counter]);
+				counter += parse_operator_expression(token_list, index + counter, operator_node);
+			}
+			else {
+				log("Recurring on parse_spell_with_arguments with " + token_list[index + counter].get_lex_name());
+				counter += parse_spell_with_arguments(token_list, index + counter, operator_node);
+			}			
+		}
+		// otherwise add the single token and increment the counter
+		else {
+			log("parse_operator_expression: RHS: not a lp");
+			tok_ident_m  = token_list[index + counter].get_lex_name().match(/TOK_IDENT/);
+			tok_number_m = token_list[index + counter].get_lex_name().match(/TOK_NUMBER/);
+			// check if its an ident or a number
+			if(tok_ident_m == null && tok_number_m == null) {
+				log("Parse Error: Expressions are in this format: (expr Op expr)");
+				return token_list.length;
+			}
+			operator_node.adopt(token_list[index + counter]);
+			counter++;
+		}		
+		
+		// check that the next token is a right paren
+		log("parse_operator_expression: Looking for a rp: " + token_list[index + counter].get_lex_name());
+		var tok_rp_m = token_list[index + counter].get_lex_name().match(/\)/);	
+		if(tok_rp_m == null) {
+			log("Parse Error: Expressions are in this format: (expr Op expr)");
+			return token_list.length;		
+		}
+		counter++;
+		current_parent.adopt(operator_node);
+		
+		log("parse_operator_expression: sucessfully parsed the operator expression.");
 		return counter;
 	}
 });
