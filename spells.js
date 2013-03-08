@@ -50,7 +50,7 @@ $(document).ready(function() {
 			log("Error: shape must only have 1 arguments. Has " + arguments.length + " argument(s) instead.");
 			return;
 		}
-		size = arguments[0].get_lex_info();
+		size = arguments[0];
 		spell.shape(size);
 	}
 	/* accelerate - adds acceleration to a movable spell
@@ -66,8 +66,8 @@ $(document).ready(function() {
 			log("Error: accelerate must only have 2 arguments");
 			return;
 		}
-		direction = arguments[0].get_lex_info();
-		amount = arguments[1].get_lex_info();
+		direction = arguments[0];
+		amount = arguments[1];
 		spell.accelerate(direction, amount);
 	}
 	/* End of Library calls */

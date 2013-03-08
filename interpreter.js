@@ -96,6 +96,10 @@ $(document).ready(function() {
 	Syn_node.prototype.set_lex_name = function(lex_name) {
 		this.lex_name = lex_name;
 	};
+
+	Syn_node.prototype.set_lex_info = function(lex_info) {
+		this.lex_info = lex_info;
+	};
 	
 	Syn_node.prototype.toString = function() {
 		log('Node: ' + this.lex_name);
@@ -224,7 +228,7 @@ $(document).ready(function() {
 					i--;			
 				}
 				log("Matched bops: " + cur_operator);
-				tokens_to_add.push(new Syn_node (cur_operator, ''));
+				tokens_to_add.push(new Syn_node ('TOK_OPERATOR', cur_operator));
 				cur_operator = '';
 				cur_tok = '';
 			}
@@ -340,7 +344,7 @@ $(document).ready(function() {
 			var spell_with_arguments = new Syn_node ('TOK_SPELL', 'spell_with_arguments');
 			current_parent.adopt(spell_with_arguments);
 			current_parent = spell_with_arguments;
-				current_parent.adopt(token_list[index + counter]);
+			current_parent.adopt(token_list[index + counter]);
 			counter++;
 		} 	
 		else { // throw an error
@@ -419,7 +423,7 @@ $(document).ready(function() {
 	var contains_operators = function(token_list, index) {
 		var paren_layer = 1;
 		for(;index < token_list.length; index++) {
-			var tok_operator_m  = token_list[index].get_lex_name().match(/(\+|-|\*|\/|%|==|!=|>|<|>=|<=)/);
+			var tok_operator_m  = token_list[index].get_lex_name().match(/TOK_OPERATOR/);
 			var tok_comma_m 	= token_list[index].get_lex_name().match(/,/);		
 			var tok_eos_m    	= token_list[index].get_lex_name().match(/TOK_EOS/);	
 			var tok_lp_m     	= token_list[index].get_lex_name().match(/\(/);	
@@ -461,7 +465,7 @@ $(document).ready(function() {
 	var parse_operator_expression = function(token_list, index, current_parent) {
 		var counter = 0;
 		var paren_layer = 1;
-		var operator_node = new Syn_node ('operator', '');
+		var operator_node = new Syn_node ('TOK_OPERATOR', '');
 		
 		// look at LHS of the operator expression
 		log("parse_operator_expression: LHS looking at " + token_list[index + counter].get_lex_name());
@@ -495,9 +499,9 @@ $(document).ready(function() {
 
 		// look at the operator
 		log("parse_operator_expression: OP looking at " + token_list[index + counter].get_lex_name());
-		var tok_operator_m  = token_list[index + counter].get_lex_name().match(/(\+|-|\*|\/|%|==|!=|>|<|>=|<=)/);
+		var tok_operator_m  = token_list[index + counter].get_lex_name().match(/TOK_OPERATOR/);
 		if(tok_operator_m != null) {
-			operator_node.set_lex_name(token_list[index + counter]);
+			operator_node.set_lex_info(token_list[index + counter].get_lex_info());
 			counter++;
 		}
 		else {
@@ -542,7 +546,7 @@ $(document).ready(function() {
 			log("Parse Error: Expressions are in this format: (expr Op expr)");
 			return token_list.length;		
 		}
-		//counter++;
+		counter++;
 		current_parent.adopt(operator_node);
 		
 		log("parse_operator_expression: sucessfully parsed the operator expression.");

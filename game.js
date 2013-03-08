@@ -107,23 +107,38 @@ $(document).ready(function() {
 				Preconditions: player.mana - spell.manacost > 0
 				Postconditions: spell is cast
 			*/
-			this.bind('Cast', function(params) {
-				//manabar = params[0];
-				var spell_name = params[0];
-				var spell_ast = params[1];
-				var my_x = getMyX();
-				var my_y = getMyY();
-				/* general cast - this will
+			this.bind('Cast', function(spell_name_and_arguments) {
+				
+				var spell_name 		= spell_name_and_arguments[0];
+				var spell_arguments = spell_name_and_arguments[1];
+				
+				var spell_info = player_spells[spell_name];
+				if(spell_info == undefined) {
+					log(spell_name + " is not a spell");
+					return;
+				}
+				var params = spell_info['params'];
+				// verify arguments == params
+				var i = 0;
+				for(each_parameter in params) {
+					log("Adding argument value: " + spell_arguments[i] + " to parameter: " + each_parameter);
+					params[each_parameter] = spell_arguments[i];
+					i++;
+				}
+				
+				var spell_root = spell_info['funct'].copy();
+
+				//var my_x = getMyX();
+				//var my_y = getMyY();
+				/* general cast - this looks up the spell in the player spell dict and initializes a Spell entity
 				
 				
 				*/ 
 				log("Cast called with player_id: " + this[0] + " spell_name: " + spell_name);
 				var spell = Crafty.e("Spell")
-					.spell(this[0], "_" + spell_name, spell_ast);	
+					.spell(this[0], spell_name, spell_root, params);	
 						
-				//this.mana -= mana_cost;
-				//manabar.trigger("ChangeMana", this.mana);
-				//var spell = shape("fire", 8);
+				
 				this.active_spells[spell[0]] = spell.getName();
 				
 				// determine manacost of spell and decrement it
@@ -269,10 +284,11 @@ $(document).ready(function() {
 		},
 		
 		// constructor for spell
-		spell: function(player_id, spell_name, spell_ast) {
+		spell: function(player_id, spell_name, spell_ast, parameters) {
 			this.name = spell_name;
 			this.parent_id = player_id;
 			this.spell_ast = spell_ast;
+			this.variables = parameters;
 			log(this.name + " initialized with player_id: " + this.parent_id);
 			return this;
 		},
@@ -292,14 +308,34 @@ $(document).ready(function() {
 			return this.name; 
 		},
 		/* Preconditions - spell_root != undefined */
-		realTimeSpellInterpreter: function(spell_root) {
+		realTimeSpellInterpreter: function(spell_root) {	
 			var children = spell_root.get_children();
 			//for(var i = 0; i < children.length; i++) {
 			//	log("children[" + i + "]:" + children[i].get_lex_info());
 			//}
-
 			var spell_name = children[0].get_lex_info();
 			var arguments = children.slice(1);
+			// look at the arguments of the spell and call the evaluate_expression on any operator
+			for(var i = 0; i < arguments.length; i++) {
+				if(arguments[i].get_lex_name() == 'TOK_OPERATOR') {
+					arguments[i] = this.evaluate_expression(arguments[i]);
+				}
+				else if(arguments[i].get_lex_name() == 'TOK_IDENTIFIER') {
+					var ident_lookup = this.variables[arguments[i].get_lex_info()];
+					if(ident_lookup == undefined) {
+						log("Interpreter Error: " + arguments[i].get_lex_info() + " needs to be a parameter with a value.");
+						return;
+					}
+					arguments[i] = ident_lookup;
+				}
+				else if(arguments[i].get_lex_name() == 'TOK_NUMBER') {
+					arguments[i] = arguments[i].get_lex_info();
+				}
+				else {
+					log("Interpreter Error: " + arguments[i].get_lex_name() + " should not be here.");
+					return;					
+				}
+			}
 			//var parameters = [this].concat(arguments);
 			var spell_success = activate_library_spell(this, this.parent_id, spell_name, arguments);
 			if(!spell_success) {
@@ -322,6 +358,44 @@ $(document).ready(function() {
 			log("Adding " + name + "'s root " + spell_root);
 			var spell_children = spell_root.get_children();
 			this.spell_ast.unshift_children(spell_children);
+		},
+		/* evaluate_expression - takes in an expression tree and returns a number or a bool */
+		/* should probably do some type checking */
+		evaluate_expression: function(expression_root) {
+			if(expression_root == undefined) {
+				return undefined;
+			}			
+			var node_name 	= expression_root.get_lex_name();
+			var children 	= expression_root.get_children();
+			/*log("Length of the children " + children.length);
+			for(var i = 0; i < children.length; i++) {
+					log("children[" + i + "]:" + children[i].get_lex_info());
+				} */
+			if (node_name == 'TOK_OPERATOR') {
+				if(children.length != 2) {
+					log("Interpreter Error: Binary Operators need two arguments.");
+					return undefined;
+				}
+				var left_child_value		= this.evaluate_expression(children[0]);
+				var right_child_value		= this.evaluate_expression(children[1]);
+				if(left_child_value == undefined || right_child_value == undefined) {
+					return undefined;
+				}
+				// this is the grossest thing I have ever done
+				log("The operator " + expression_root.get_lex_info());
+				log("The string to call eval with " + left_child_value.toString() + expression_root.get_lex_info() + right_child_value.toString());
+				return eval(left_child_value + expression_root.get_lex_info() + right_child_value);
+			}
+			else if(node_name == 'TOK_NUMBER') {
+				return expression_root.get_lex_info();
+			}
+			else if(node_name == 'TOK_IDENTIFIER') {
+				var variable = this.variables[ident];
+				if(number == undefined) {
+					return undefined;
+				}
+				return variable;
+			}
 		},
 	}); 
 	/* end game components */
@@ -357,17 +431,17 @@ $(document).ready(function() {
 		Crafty.background('rgb(127,127,127)');	
 		
 		// test insert
-		insert_player_spell('fireball', {}, 'shape 10, accelerate 3 2');
+		insert_player_spell('fireball', {'xdirection':1, 'speed':0}, 'shape 6, accelerate xdirection speed');
 		//insert_player_spell('speedup', {}, 'accelerate 3 2, speedup');  
-		var spell = 'fireball';
+		var spell = 'shape ((0 - 1) * 2)';
 
 		var spells_toks = scan(spell);
 		
-		log("Starting SCAN");	
+		/*log("Starting SCAN");	
 		for(var i = 0; i < spells_toks.length;i++) {
 			log('tok[' + i + ']: ' + spells_toks[i].get_lex_name());
 		}
-		log("Ending SCAN\n");
+		log("Ending SCAN\n"); */
 		
 		log("Starting PARSE");
 		var root_node = parse(spells_toks);
@@ -405,13 +479,9 @@ $(document).ready(function() {
 			.attr({ x: 300, y: 150, w: 25, h: 25 })
 			.multiway(4, {W: -90, S: 90, D: 0, A: 180})
 			.bind("KeyDown", function(e) {
+				var spell_name = 'fireball';
 				if (this.isDown('SPACE')) {
-					spell_root = root_node.copy();
-					// find player id
-					var params = ["block", spell_root];
-					this.trigger("Cast", params);
-					//tree_str = root_node.toString();
-					//log('traversal : ' + tree_str);
+					this.trigger("Cast", [spell_name, [2, 4]]);
 				}
 			})
 	
