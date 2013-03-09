@@ -87,13 +87,25 @@
 		/*border-left: 1px solid #B4E6FF; 
 		margin-left: -1px; */
 	}	
-	#spell_display_centered_area{
+	#params_display_area{
 		text-align: left;
 		width: 100%;
-		height: 100%;
+		height: 10%;
+		/*border-left: 1px solid #B4E6FF; 
+		margin-left: -1px; */
+	}	
+	#spell_display_centered_area{
+		text-align: left;
+		top: 10%;
+		width: 100%;
+		height: 90%;
 		/*border-left: 1px solid #B4E6FF; 
 		margin-left: -1px; */
 	}		
+	#spell_params{
+		height: 80%;
+		width: 80%;
+	}
 	#spell_text{
 		height: 80%;
 		width: 80%;

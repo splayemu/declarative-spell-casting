@@ -117,13 +117,13 @@ $(document).ready(function() {
 					log(spell_name + " is not a spell");
 					return;
 				}
-				var params = spell_info['params'];
+				//var params = spell_info['params'];
+				var params = {};
+				var params_list = spell_info['params'].split(" ");
 				// verify arguments == params
-				var i = 0;
-				for(each_parameter in params) {
-					log("Adding argument value: " + spell_arguments[i] + " to parameter: " + each_parameter);
-					params[each_parameter] = spell_arguments[i];
-					i++;
+				for(index in params_list) {
+					log("Adding argument value: " + spell_arguments[index] + " to parameter: " + params_list[index]);
+					params[params_list[index]] = spell_arguments[index];
 				}
 				
 				var spell_root = spell_info['funct'].copy();
@@ -345,15 +345,20 @@ $(document).ready(function() {
 			//log("Player_id: " + this.parent_id);
 			Crafty(this.parent_id).decrementMana(1);
 		},
-		activate_player_spell_spell: function(name, arguments) {
+		activate_player_spell_spell: function(name, spell_arguments) {
 			log("Trying to cast " + name);
 			var spell_info = player_spells[name];
 			if(spell_info == undefined) {
 				log(name + " is not a spell");
 				return;
 			}
-			var params = spell_info['params'];
+			var params = {};
+			var params_list = spell_info['params'].split(" ");
 			// verify arguments == params
+			for(index in params_list) {
+				log("Adding argument value: " + spell_arguments[index] + " to parameter: " + params_list[index]);
+				this.variables[params_list[index]] = spell_arguments[index];
+			}
 			var spell_root = spell_info['funct'].copy();
 			log("Adding " + name + "'s root " + spell_root);
 			var spell_children = spell_root.get_children();
@@ -431,7 +436,7 @@ $(document).ready(function() {
 		Crafty.background('rgb(127,127,127)');	
 		
 		// test insert
-		insert_player_spell('fireball', {'xdirection':1, 'speed':0}, 'shape 6, accelerate xdirection speed');
+		insert_player_spell('fireball', 'xdirection speed', 'shape 6, accelerate xdirection speed');
 		//insert_player_spell('speedup', {}, 'accelerate 3 2, speedup');  
 		var spell = 'shape ((0 - 1) * 2)';
 

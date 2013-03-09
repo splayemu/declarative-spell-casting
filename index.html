@@ -13,8 +13,27 @@
 		<script type="text/javascript">
 			jQuery(document).ready(function(){
 				list_spell_names();
+				
+				
+				$("#submit_btn").click(function() {  
+					var spell_name 		= $("input#spell_name").val();
+					var spell_text 		= $("textarea#spell_text").val();
+					var spell_params 	= $("textarea#spell_params").val();
+					//alert("Spell text: " + spell_text);
+					insert_player_spell(spell_name, spell_params, spell_text);
+					list_spell_names();
+					return false; 
+				});  
+				
+				$(".spell_name").live('click', (function() {  
+					var clicked_spell_name = $(this).text();
+					grab_spell_text(clicked_spell_name);
+					grab_spell_params(clicked_spell_name);
+					//alert(clicked_element);
+					return false; 
+				}));
 			});
-
+/*
 			// used for when the user clicks on the add spell button
 			$(function() {  
 				$("#submit_btn").click(function() {  
@@ -32,10 +51,11 @@
 				$(".spell_name").live('click', (function() {  
 					var clicked_spell_name = $(this).text();
 					grab_spell_text(clicked_spell_name);
+					grab_spell_params(clicked_spell_name);
 					//alert(clicked_element);
 					return false; 
 				}));
-			}); 
+			}); */
  
 			var list_spell_names = function () {
 				$("#spell_name_lister").html('');
@@ -53,6 +73,17 @@
 				}
 				var spell_text = spell['spell_text'];
 				$("textarea#spell_text").val(spell_text);
+			}
+			
+			var grab_spell_params = function (spell_name) {
+				// save code currently in textarea#spell_text
+				var spell = player_spells[spell_name];
+				if(spell == undefined) {
+					alert("Error: " + spell_name + " is not a spell");
+					return false;
+				}
+				var spell_params = spell['params'];
+				$("textarea#spell_params").val(spell_params);
 			}
  
 		</script>
@@ -76,6 +107,9 @@
 					</div>
 				</div>
 				<div id="spell_display_area">
+					<div id="params_display_area">
+						<textarea id="spell_params"/>Enter Spell Parameters Here</textarea>
+					</div>
 					<div id="spell_display_centered_area">
 						<textarea id="spell_text"/>Enter Spell Text Here</textarea>
 					</div>
