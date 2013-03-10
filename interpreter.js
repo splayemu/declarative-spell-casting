@@ -320,6 +320,7 @@ $(document).ready(function() {
 		// read through the token list
 		var current_cast = new Array();
 		for(var i = 0; i < token_list.length; i++) {
+			log("Parse: looking at " + token_list[i]); 
 			var tok_eos_m    = token_list[i].get_lex_name().match(/TOK_EOS/);
 			if(tok_eos_m == null)	
 				i += parse_spell_with_arguments(token_list, i, current_parent, 0);		
@@ -338,7 +339,7 @@ $(document).ready(function() {
 		//if (tok_shape_m != null) {
 		//	current_cast.push(token_list[i]);
 		//}
-		log("Trying to add spell cast of name: " + token_list[index + counter].get_lex_info());
+		log("Parse_spell_with_arguments: trying to add spell cast of name: " + token_list[index + counter].get_lex_info());
 		if (tok_ident_m != null) {
 
 			var spell_with_arguments = new Syn_node ('TOK_SPELL', 'spell_with_arguments');
@@ -365,7 +366,7 @@ $(document).ready(function() {
 				else
 					counter += parse_spell_with_arguments
 		*/
-		for(; counter < token_list.length; counter++) {
+		for(; (index + counter) < token_list.length; counter++) {
 			log("parse_spell_with_arguments: looking at " + token_list[index + counter]);
 			var tok_ident_m  = token_list[index + counter].get_lex_name().match(/TOK_IDENT/);
 			var tok_number_m = token_list[index + counter].get_lex_name().match(/TOK_NUMBER/);
@@ -410,6 +411,7 @@ $(document).ready(function() {
 				break;
 			} 	
 			else if (tok_comma_m != null || tok_eos_m != null) {
+				log("parse_spell_with_arguments: found comma or eof.");
 				break;
 			}			
 			else { // throw an error
@@ -546,7 +548,7 @@ $(document).ready(function() {
 			log("Parse Error: Expressions are in this format: (expr Op expr)");
 			return token_list.length;		
 		}
-		counter++;
+		//counter++;
 		current_parent.adopt(operator_node);
 		
 		log("parse_operator_expression: sucessfully parsed the operator expression.");

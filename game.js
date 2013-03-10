@@ -11,9 +11,13 @@ $(document).ready(function() {
 	var background_height = 400;
 	var playable_width = 600;
 	var playable_height = 400;
+	var canvas_top = 175; //px
+	var canvas_left = 50; //px
 	
-	var canvasPosition = $('#cr-stage').offset();
-	log("canvasPosition y: " + canvasPosition.top  + " x: " + canvasPosition.left)
+	
+	//var canvasPosition = $('#cr-stage').offset();
+	
+	//log("canvasPosition y: " + canvasPosition.top  + " x: " + canvasPosition.left);
 	
 	
 	player_spells	= {};
@@ -282,7 +286,7 @@ $(document).ready(function() {
 
 			this.bind('EnterFrame', function () {
 				// update the cursor variable
-				this.variables['cursor'] = getCursorDirection();
+				this.variables['cursor'] = getCursorDirection(this._x, this._y);
 				//log("Parent_id = " + this.parent_id);
 				if(this.spell_ast.get_children().length != 0) {
 					this.realTimeSpellInterpreter(this.spell_ast.shift_child());
@@ -402,8 +406,8 @@ $(document).ready(function() {
 				return expression_root.get_lex_info();
 			}
 			else if(node_name == 'TOK_IDENTIFIER') {
-				var variable = this.variables[ident];
-				if(number == undefined) {
+				var variable = this.variables[expression_root.get_lex_info()];
+				if(variable == undefined) {
 					return undefined;
 				}
 				return variable;
@@ -436,15 +440,15 @@ $(document).ready(function() {
 	}
 	/* end general purpose global functions */
 
-	var getCursorDirection = function () {
+	var getCursorDirection = function (myX, myY) {
 		// tan((mouseX - playerX)/(mouseY - playerY))
 		//log("xMe: " + getMyX() + " xCursor: " + getMouseX() + " yMe: " + getMyY() + " yCursor: " + getMouseY()); 
-		var yDifference = getMouseY() - (getMyY() + canvasPosition.top);
-		var xDifference = getMouseX() - (getMyX() + canvasPosition.left);
-		log("xDifference: " + xDifference + " yDifference: " + yDifference);
+		var yDifference = getMouseY() - (myY + canvas_top);
+		var xDifference = getMouseX() - (myX + canvas_left);
+		//log("xDifference: " + xDifference + " yDifference: " + yDifference);
 		//log("hypDist: " + hypDist);
-		//log("Angle: " + (Math.atan2(yDifference, xDifference) * (180 / Math.PI)));
-		return Math.atan2(yDifference, xDifference);
+		//log("Angle: " + Math.atan2(xDifference, yDifference) * (180 / Math.PI));
+		return Math.atan2(xDifference, yDifference) * (180 / Math.PI);
 	}
 	
 	
