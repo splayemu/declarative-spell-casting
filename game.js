@@ -7,10 +7,14 @@ $(document).ready(function() {
 	}
 	
 	// Game constants
-	background_width = 600;
-	background_height = 400;
-	playable_width = 600;
-	playable_height = 400;
+	var background_width = 600;
+	var background_height = 400;
+	var playable_width = 600;
+	var playable_height = 400;
+	
+	var canvasPosition = $('#cr-stage').offset();
+	log("canvasPosition y: " + canvasPosition.top  + " x: " + canvasPosition.left)
+	
 	
 	player_spells	= {};
 	library_spells	= {};
@@ -210,9 +214,10 @@ $(document).ready(function() {
 			return this;
 		},
 		accelerate: function(direction, speed) {
+				direction = direction * Math.PI / 180;
 				var additionaldX = Math.sin(direction) * speed;
 				var additionaldY = Math.cos(direction) * speed;
-				//log("Accelerating dX: " + additionaldX + " dY: " + additionaldY);
+				log("Accelerating dX: " + additionaldX + " dY: " + additionaldY);
 				this.attr({ dX: this.dX + additionaldX, dY: this.dY + additionaldY });
 		},
 		selfDestruct: function() {
@@ -276,6 +281,8 @@ $(document).ready(function() {
 		init: function() {
 
 			this.bind('EnterFrame', function () {
+				// update the cursor variable
+				this.variables['cursor'] = getCursorDirection();
 				//log("Parent_id = " + this.parent_id);
 				if(this.spell_ast.get_children().length != 0) {
 					this.realTimeSpellInterpreter(this.spell_ast.shift_child());
@@ -429,15 +436,26 @@ $(document).ready(function() {
 	}
 	/* end general purpose global functions */
 
-
+	var getCursorDirection = function () {
+		// tan((mouseX - playerX)/(mouseY - playerY))
+		//log("xMe: " + getMyX() + " xCursor: " + getMouseX() + " yMe: " + getMyY() + " yCursor: " + getMouseY()); 
+		var yDifference = getMouseY() - (getMyY() + canvasPosition.top);
+		var xDifference = getMouseX() - (getMyX() + canvasPosition.left);
+		log("xDifference: " + xDifference + " yDifference: " + yDifference);
+		//log("hypDist: " + hypDist);
+		//log("Angle: " + (Math.atan2(yDifference, xDifference) * (180 / Math.PI)));
+		return Math.atan2(yDifference, xDifference);
+	}
+	
 	
 	function init() {
 		Crafty.init(background_width, background_height);
 		Crafty.background('rgb(127,127,127)');	
 		
 		// test insert
-		insert_player_spell('fireball', 'xdirection speed', 'shape 6, accelerate xdirection speed');
-		//insert_player_spell('speedup', {}, 'accelerate 3 2, speedup');  
+		insert_player_spell('fireball', '', 'shape 6, accelerate cursor 2');  
+		insert_player_spell('space_bar_to_cast', '', 'fireball');
+
 		var spell = 'shape ((0 - 1) * 2)';
 
 		var spells_toks = scan(spell);
@@ -484,14 +502,15 @@ $(document).ready(function() {
 			.attr({ x: 300, y: 150, w: 25, h: 25 })
 			.multiway(4, {W: -90, S: 90, D: 0, A: 180})
 			.bind("KeyDown", function(e) {
-				var spell_name = 'fireball';
+				var spell_name = 'space_bar_to_cast';
 				if (this.isDown('SPACE')) {
-					this.trigger("Cast", [spell_name, [2, 4]]);
+					this.trigger("Cast", [spell_name, []]);
 				}
 			})
 	
 		// this event somehow keeps the mousepos entity up to date with the correct coordinates
 		Crafty.addEvent(this, "mousemove", function(e) {
+			//log("MouseX " + e.clientX + " MouseY: " + e.clientY);
 			mousepos.attr({ x: e.clientX , y: e.clientY, w: 100, h: 20 }); 
 		});
 	};
