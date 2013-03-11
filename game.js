@@ -190,8 +190,15 @@ $(document).ready(function() {
 
 	});
 
-
-	/* game components */
+	Crafty.c("Collidable", {
+		init: function() {
+		},
+		
+		// constructor for the projectile
+		collidable: function() {
+			return this;
+		},		
+	});
 	
 	Crafty.c("PhysicalSpell", {
 		init: function() {
@@ -503,7 +510,7 @@ $(document).ready(function() {
 		var player1 = Crafty.e("Player1, PlayerManager, 2D, Canvas, Color, Keyboard, Multiway")
 			.playermanager(100,1, manabar)
 			.color('rgb(0,255,0)')
-			.attr({ x: 300, y: 150, w: 25, h: 25 })
+			.attr({ x: 150, y: 150, w: 25, h: 25 })
 			.multiway(4, {W: -90, S: 90, D: 0, A: 180})
 			.bind("KeyDown", function(e) {
 				var spell_name = 'space_bar_to_cast';
@@ -511,6 +518,12 @@ $(document).ready(function() {
 					this.trigger("Cast", [spell_name, []]);
 				}
 			})
+	
+	
+		//Target Dummy
+		/*var targetDummy = Crafty.e("TargetDummy, 2D, Canvas, Color")
+			.color('rgb(0,155,255)')
+			.attr({ x: 400, y: 250, w: 15, h: 15 }) */
 	
 		// this event somehow keeps the mousepos entity up to date with the correct coordinates
 		Crafty.addEvent(this, "mousemove", function(e) {

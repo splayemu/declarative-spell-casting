@@ -27,6 +27,7 @@
 				
 				$(".spell_name").live('click', (function() {  
 					var clicked_spell_name = $(this).text();
+					$("input#spell_name").val(clicked_spell_name);
 					grab_spell_text(clicked_spell_name);
 					grab_spell_params(clicked_spell_name);
 					//alert(clicked_element);
@@ -99,18 +100,24 @@
 			<div id="spell_library_box">
 				<div id="spell_name_area">
 					<div id="spell_name_centered_area">
+						<b> Current Spells </b>
 						<div id="spell_name_lister"> </div>
 						<div id="new_spell_name">
+							<b> Enter Spell Name Here </b>
 							<input type="text" id="spell_name" name="spell_name" />
-							<input type="submit" name="submit" class="button" id="submit_btn" value="Add Spell" />
+							<input type="submit" name="submit" class="button" id="submit_btn" value="Add or Update Spell" />
+							<p> You may edit a spell by clicking one of your current spells, and changing the spell text. 
+								You may also create a new spell by entering a new spell name and text. Press 'Add or Update Spell' when done editing.</p>
 						</div>
 					</div>
 				</div>
 				<div id="spell_display_area">
 					<div id="params_display_area">
+						<b> Enter Spell Parameters Here </b>
 						<textarea id="spell_params"/>Enter Spell Parameters Here</textarea>
 					</div>
 					<div id="spell_display_centered_area">
+						<b> Enter Spell Text Here </b>
 						<textarea id="spell_text"/>Enter Spell Text Here</textarea>
 					</div>
 				</div>
