@@ -1,12 +1,15 @@
+/*	game.js	- file that contains all the craftyJs components and entities. Initializes the game world.
+
+*/
 $(document).ready(function() {
-	// quick fix to log messages
+	// Sample log outprint code found on the internet
 	function log(msg) {
 		setTimeout(function() {
 			throw new Error(msg);
 		}, 0);
 	}
 	
-	// Game constants
+	// canvas constants
 	var background_width = 600;
 	var background_height = 400;
 	var playable_width = 600;
@@ -16,14 +19,16 @@ $(document).ready(function() {
 	
 	
 	//var canvasPosition = $('#cr-stage').offset();
-	
 	//log("canvasPosition y: " + canvasPosition.top  + " x: " + canvasPosition.left);
 	
 	
 	player_spells	= {};
 	library_spells	= {};
 	
-	// Generic object size
+	/* 	size - returns the size of the object
+		
+		Found somewhere on stackoverflow
+	*/
 	Object.size = function(obj) {
 		var size = 0, key;
 		for (key in obj) {
@@ -32,26 +37,12 @@ $(document).ready(function() {
 		return size;
 	};
 
-
-	/* activate_player_spell	- looks up the player created spell and adds it to the spell tree
-		Inputs:	name		- the name of the spell
-			arguments	- the arguments of the spell
-
-		Desire behavior:	If it is executing in the spell layer (e.g. spell args, spell args, ...)
-						add the spell root to be executed before any other spells (similar to a stack push)
-					If it is a spell executed as an argument to another spell
-						the spell root needs to be added to place to be executed
-						create a temporary variable, call it return_val, to store the return value
-						return_val = spell	
-	*/
-
-	/* insert_player_spell 	- is a function that creates the spell object and adds it to the player_spells dictionary
+	/*	insertPlayerSpell 	- creates the spell object and adds it to the player_spells dictionary
 		Inputs:	name 		- the string containing the name of the spell
-			parameters	- a dictionary of the arguments and their types
-			spell_text	- the string containing the text of the spell
-
+				parameters	- a dictionary of the arguments and their types
+				spell_text	- the string containing the text of the spell
 	*/
-	insert_player_spell = function (name, params, spell_text) {
+	insertPlayerSpell = function (name, params, spell_text) {
 		var spells_toks = scan(spell_text);	
 	/*	log("Starting SCAN");	
 		for(var i = 0; i < spells_toks.length;i++) {
@@ -68,47 +59,37 @@ $(document).ready(function() {
 		log("Inserting player spell " + name + " paired with " + spell_info.toString());		
 	}
 
-	/* game components */
-	/* PlayerManager - Holds the required entities and values to run a player
+	/*	game components - components are used by the crafty engine to give methods and values to an entity */
+	
+	/*	PlayerManager - gives the values and methods useful for managing a player
 		
 		Values:
-			Current_mana
-			Maximum_mana
-			Mana_regen
-			active_spells - dictionary holding every spell the player has cast
-			
-		Entities:
-			Player
-			Manabar
-			SpellMenu
+			mana 			- Mana is used to keep track of the amount of spells a player has casted.
+								All spells decrement mana upon casting.
+								When mana reaches 0, all of the player's spells disappear.
+			maximum_mana	- the greatest amount of mana a player can have
+			mana_regen		- how much mana will regen per game tick
+			manabar			- the id of the player's coresponding manabar entity (shows the player how much mana he/she has)
+			active_spells 	- a dictionary holding all of the player's active spells
 			
 		Methods:
 			destroySpells - destroys all the spells
 			incrementMana
-			decrementMana
-			
-			
+			decrementMana		
 	*/
 	Crafty.c("PlayerManager", {
 		init: function() {
+			/* EnterFrame - happens every tick of the game. The game tick of a player should:
+				- Increment Mana
+				- If mana <= 0, 
+					destroy all spells
+			*/
 			this.bind('EnterFrame', function () {
-				/* Game tick for player 
-					- Increment Mana
-					- evaluate/calc manacost (RTSI) for each spell
-					- total_manacost = add up the mana cost of the current spells
-					- Decrement Mana with total_manacost
-					- If cost of executing spells > 0, all spells are destroyed
-				
-				*/
-				// increment mana
 				this.incrementMana(this.mana_regen);
 
-				// make sure that 
-				if(this.mana <= 0 && Object.size(this.active_spells) != 0) {
-					log("Destroying spells");
-					//for(spell_id in this.active_spells) {
-						Crafty("Spell").each(function() { this.destroy() } );
-					//}
+				if(this.mana <= 0 && Object.size(this.active_spells) > 0) {
+					//log("Destroying spells");
+					Crafty("Spell").each(function() { this.destroy() } );
 				}
 			});
 			/* Cast - Will be functionized. Casts a spell
@@ -135,9 +116,6 @@ $(document).ready(function() {
 				}
 				
 				var spell_root = spell_info['funct'].copy();
-
-				//var my_x = getMyX();
-				//var my_y = getMyY();
 				/* general cast - this looks up the spell in the player spell dict and initializes a Spell entity
 				
 				
@@ -156,22 +134,20 @@ $(document).ready(function() {
 			});
 		},
 		
-		// constructor for the player
-		// Mana - the player will have a static amount of mana that is used to cast spells. 
-		//	      When mana reaches 0, all of his/her spells disappear
-		// Mana Regen - how much mana will regen per game tick
-		// active_spells - all the active spells this player has cast
-		// spell_book - symbol table for spells
-		// Actions - a queue for storing the spells a player has to cast
+		/* 	playermanager - creates a playermanager entity
+		*/
 		playermanager: function(maximum_mana, mana_regen, manabar) {
-			this.maximum_mana = maximum_mana;
 			this.mana = 0;
+			this.maximum_mana = maximum_mana;
 			this.mana_regen = mana_regen;
 			this.manabar = manabar;
 			this.active_spells = {};
-			log("Mana " + this.mana);
 			return this;
 		},
+		/*	incrementMana - adds the amount to the player and updates the manabar
+			Inputs:
+				amount	- amount to add to the mana
+		*/
 		incrementMana: function(amount) {
 			this.mana += amount;
 			if(this.mana + amount > this.maximum_mana) {
@@ -181,15 +157,23 @@ $(document).ready(function() {
 			// update manabar
 			this.manabar.trigger("ChangeMana", this.mana);
 		},
-		decrementMana: function(mana_cost) {
-			this.mana -= mana_cost;
+		/*	decrementMana - subtracts mana from the player and updates the manabar
+			Inputs:
+				amount	- amount to subtract from mana
+		*/
+		decrementMana: function(amount) {
+			this.mana -= amount;
 			// update manabar
-			//log("Decrementing mana to: " + this.mana + " with the amount of " + mana_cost);
+			//log("Decrementing mana to: " + this.mana + " with the amount of " + amount);
 			this.manabar.trigger("ChangeMana", this.mana);
 		}
 
 	});
 
+	/*	Collidable - gives the methods and values that allow objects to collide into each other
+	
+		Work in progress
+		
 	Crafty.c("Collidable", {
 		init: function() {
 		},
@@ -198,8 +182,21 @@ $(document).ready(function() {
 		collidable: function() {
 			return this;
 		},		
-	});
+	}); */
 	
+	/*	PhysicalSpell - component that gives physical 2d properties to a spell. Gives them color and acceleration.
+	
+		Values:
+			size	- the length (in pixels) of each side of the entity
+			x		- the x location of the entity
+			y		- the y location of the entity
+			color	- the color of the entity
+		
+		Methods:
+			physicalspell
+			accelerate
+			selfDestruct
+	*/
 	Crafty.c("PhysicalSpell", {
 		init: function() {
 			this.requires('2D');
@@ -207,7 +204,8 @@ $(document).ready(function() {
 			this.requires('Color');
 		},
 		
-		// constructor for the projectile
+		/*	physicalspell - the constructor for the physicalspell component
+		*/
 		physicalspell: function(size, xStartingPos, yStartingPos, color) {
 			this.attr({ x: xStartingPos, y: yStartingPos, w: size, h: size, dX: 0, dY: 0 })
 			.color(color)
@@ -224,69 +222,52 @@ $(document).ready(function() {
 			})
 			return this;
 		},
-		accelerate: function(direction, speed) {
+		/*	accelerate - adds an acceleration to a physical spell
+		
+			Inputs:
+				direction	- the direction in degress of the acceleration
+				amount		- the amount of acceleration to add
+		*/
+		accelerate: function(direction, amount) {
 				direction = direction * Math.PI / 180;
-				var additionaldX = Math.sin(direction) * speed;
-				var additionaldY = Math.cos(direction) * speed;
+				var additionaldX = Math.sin(direction) * amount;
+				var additionaldY = Math.cos(direction) * amount;
 				log("Accelerating dX: " + additionaldX + " dY: " + additionaldY);
 				this.attr({ dX: this.dX + additionaldX, dY: this.dY + additionaldY });
 		},
+		/*	selfDestruct - calls the entities destroy method
+		*/
 		selfDestruct: function() {
 			this.destroy();
 		}
 
 	});
 	
-	/* 
-	Spell - Runs each spell by executing one step of the RTSI per frame
+	/* 	Spell - Runs each spell by executing one step of the RTSI per frame
+		
 		Values:
 			name		- holds the spell name (later will be generated from the caster's name)
 			parent		- the caster of the spell
 			spell_ast	- the abstract syntax tree of the spell
-			
+			variables	- holds the current variables that the spell has access to. E.G. arguments passes into the spell
+		
 		Methods:
-			shape 		- makes the spell physical
-			realTimeSpellInterpreter 	- 
-				This guy will work as a small step interpreter. It will evaluate one spell cast at a time 
-				(separated by the commas).
-				
-				Inputs: One spell_root
-				
-				Psuedo Code:
-					Evaluate expressions in the arguments
-						- if a spell is part of an expression, recur on the AST of the spell
-					Call the base spell library lookup.
-					if ! undefined
-						mana -= manacost
-						call function
-					else
-						call spell library lookup (returns a spell AST)
-						if ! undefined
-							mana -= trivial_manacost (costs trivial mana to recur)
-							recur on the AST of the spell
-						else
-							throw an error "Invalid spell"
-					If there is another spell,
-						mana -= trivial_manacost
-						recur on next spell in the AST
-
-			activate_player_spell_spell	- looks up the player created spell and adds it to the spell tree
-				Inputs:	name		- the name of the spell
-					arguments	- the arguments of the spell
-
-				Desired behavior:	If it is executing in the spell layer (e.g. spell args, spell args, ...)
-								add the spell root to be executed before any other spells 
-								(similar to a stack push)
-
+			spell
+			getName
+			shape
+			realTimeSpellInterpreter
+			activatePlayerSpellSpell
+			evaluateExpression
+			
+		To Work On:
 			activate_player_spell_argument	- looks up the player created spell and 
-				Inputs: name
-					arguments
+			Inputs: name
+				arguments
 
-				Desired behavior:	If it is a spell executed as an argument to another spell
-								the spell root needs to be added to place to be executed
-								create a temporary variable, call it return_val, to store the return value
-								return_val = spell
-	
+			Desired behavior:	If it is a spell executed as an argument to another spell
+							the spell root needs to be added to place to be executed
+							create a temporary variable, call it return_val, to store the return value
+							return_val = spell
 	*/
 	Crafty.c("Spell", {
 		init: function() {
@@ -310,22 +291,49 @@ $(document).ready(function() {
 			log(this.name + " initialized with player_id: " + this.parent_id);
 			return this;
 		},
+		getName: function() {
+			return this.name; 
+		},
 		
-		/* Things to consider 
-				- What happens when two shapes are cast in the same spell?
-				- What happens when shape is called during a recur?	
+		/* 	shape - adds a physical component to a spell entity. Initializes the physical component with a length and width of size
+		
+			Things to consider 
+					- What happens when two shapes are cast in the same spell?
+					- What happens when shape is called during a recur?	
 		*/
 		shape: function (size) {
 			log("Shaping a spell of size " + size);
 			//log("player_id: " + player_id);
 			//log("size: " + size);
 
-			this.addComponent("2D, Canvas, Collision, PhysicalSpell").physicalspell(size, getMyX(), getMyY(), 'rgb(255,10,10)');
+			var parent = Crafty(this.parent_id);
+			
+			this.addComponent("2D, Canvas, Collision, PhysicalSpell").physicalspell(size, parent._x, parent._y, 'rgb(255,10,10)');
 		},
-		getName: function() {
-			return this.name; 
-		},
-		/* Preconditions - spell_root != undefined */
+		
+		/* 	realTimeSpellInterpreter - function that traverses the spell parse tree, looks up and calls library spells, 
+										and looks up and adds the parse tree of the player spell to the current parse tree
+				
+			Inputs: spell_root
+				
+			Psuedo Code:
+				Evaluate expressions in the arguments
+					- if a spell is part of an expression, recur on the AST of the spell
+				Call the base spell library lookup.
+				if ! undefined
+					mana -= manacost
+					call function
+				else
+					call spell library lookup (returns a spell AST)
+					if ! undefined
+						mana -= trivial_manacost (costs trivial mana to recur)
+						recur on the AST of the spell
+					else
+						throw an error "Invalid spell"
+				If there is another spell,
+					mana -= trivial_manacost
+					recur on next spell in the AST
+		*/
 		realTimeSpellInterpreter: function(spell_root) {	
 			var children = spell_root.get_children();
 			//for(var i = 0; i < children.length; i++) {
@@ -333,10 +341,10 @@ $(document).ready(function() {
 			//}
 			var spell_name = children[0].get_lex_info();
 			var arguments = children.slice(1);
-			// look at the arguments of the spell and call the evaluate_expression on any operator
+			// look at the arguments of the spell and call the evaluateExpression on any operator
 			for(var i = 0; i < arguments.length; i++) {
 				if(arguments[i].get_lex_name() == 'TOK_OPERATOR') {
-					arguments[i] = this.evaluate_expression(arguments[i]);
+					arguments[i] = this.evaluateExpression(arguments[i]);
 				}
 				else if(arguments[i].get_lex_name() == 'TOK_IDENTIFIER') {
 					var ident_lookup = this.variables[arguments[i].get_lex_info()];
@@ -358,12 +366,21 @@ $(document).ready(function() {
 			var spell_success = activate_library_spell(this, this.parent_id, spell_name, arguments);
 			if(!spell_success) {
 				log("Trying the player spell library");
-				this.activate_player_spell_spell(spell_name, arguments);
+				this.activatePlayerSpellSpell(spell_name, arguments);
 			}
 			//log("Player_id: " + this.parent_id);
 			Crafty(this.parent_id).decrementMana(1);
 		},
-		activate_player_spell_spell: function(name, spell_arguments) {
+		
+		/*	activatePlayerSpellSpell	- looks up the player created spell and adds it to the spell tree
+			Inputs:	name		- the name of the spell
+					arguments	- the arguments of the spell
+
+			Desired behavior:	If it is executing in the spell layer (e.g. spell args, spell args, ...)
+								add the spell root to be executed before any other spells 
+								(similar to a stack push)
+		*/
+		activatePlayerSpellSpell: function(name, spell_arguments) {
 			log("Trying to cast " + name);
 			var spell_info = player_spells[name];
 			if(spell_info == undefined) {
@@ -382,9 +399,14 @@ $(document).ready(function() {
 			var spell_children = spell_root.get_children();
 			this.spell_ast.unshift_children(spell_children);
 		},
-		/* evaluate_expression - takes in an expression tree and returns a number or a bool */
-		/* should probably do some type checking */
-		evaluate_expression: function(expression_root) {
+		
+		/* 	evaluateExpression - traverses an expression tree and returns a number or a bool
+			Inputs: expression_root	- an expression tree
+			
+			Work on:
+				should probably do some type checking 
+		*/
+		evaluateExpression: function(expression_root) {
 			if(expression_root == undefined) {
 				return undefined;
 			}			
@@ -399,8 +421,8 @@ $(document).ready(function() {
 					log("Interpreter Error: Binary Operators need two arguments.");
 					return undefined;
 				}
-				var left_child_value		= this.evaluate_expression(children[0]);
-				var right_child_value		= this.evaluate_expression(children[1]);
+				var left_child_value		= this.evaluateExpression(children[0]);
+				var right_child_value		= this.evaluateExpression(children[1]);
 				if(left_child_value == undefined || right_child_value == undefined) {
 					return undefined;
 				}
@@ -421,85 +443,52 @@ $(document).ready(function() {
 			}
 		},
 	}); 
+	
 	/* end game components */
 
-
-	/* general purpose global functions */
-	// need getters for the mouse position and player position
-	function getMouseX() {
-		var mousepos = Crafty("MousePos");
-		return mousepos._x;
-	}
-
-	function getMouseY() {
-		var mousepos = Crafty("MousePos");
-		return mousepos._y;
-	}
-
-	getMyX = function() {
-		var player1 = Crafty("Player1");
-		return player1._x;
-	}
-
-	getMyY = function() {
-		var player1 = Crafty("Player1");
-		return player1._y;
-	}
-	/* end general purpose global functions */
-
+	/* 	getCursorDirection - returns the direction of the cursor from the x and y positions passed as arguments 
+		Inputs:
+			myX	- the x location of the start of the vector 
+			myY	- the y location of the start of the vector
+			
+		Outputs: a scalar direction value
+	*/
 	var getCursorDirection = function (myX, myY) {
-		// tan((mouseX - playerX)/(mouseY - playerY))
-		//log("xMe: " + getMyX() + " xCursor: " + getMouseX() + " yMe: " + getMyY() + " yCursor: " + getMouseY()); 
-		var yDifference = getMouseY() - (myY + canvas_top);
-		var xDifference = getMouseX() - (myX + canvas_left);
+		var mousepos = Crafty("MousePos");
+		var yDifference = mousepos._y - (myY + canvas_top);
+		var xDifference = mousepos._x - (myX + canvas_left);
 		//log("xDifference: " + xDifference + " yDifference: " + yDifference);
 		//log("hypDist: " + hypDist);
 		//log("Angle: " + Math.atan2(xDifference, yDifference) * (180 / Math.PI));
 		return Math.atan2(xDifference, yDifference) * (180 / Math.PI);
 	}
 	
-	
+	/*	init - sets up the crafty environment */
 	function init() {
 		Crafty.init(background_width, background_height);
 		Crafty.background('rgb(127,127,127)');	
 		
-		// test insert
-		insert_player_spell('fireball', '', 'shape 6, accelerate cursor 2');  
-		insert_player_spell('space_bar_to_cast', '', 'fireball');
-
-		var spell = 'shape ((0 - 1) * 2)';
-
-		var spells_toks = scan(spell);
+		insertPlayerSpell('fireball', '', 'shape 6, accelerate cursor 2');  
+		insertPlayerSpell('space_bar_to_cast', '', 'fireball');
 		
-		/*log("Starting SCAN");	
-		for(var i = 0; i < spells_toks.length;i++) {
-			log('tok[' + i + ']: ' + spells_toks[i].get_lex_name());
-		}
-		log("Ending SCAN\n"); */
-		
-		log("Starting PARSE");
-		var root_node = parse(spells_toks);
-		log("Ending PARSE\n");
-
-		log('traversal : ' + root_node.toString());
-		// depth first traversal of the grammar tree
-
-		
+		/*	mousepos - stores the position of the mouse */
 		var mousepos = Crafty.e("MousePos, Canvas, 2D, Text")
 			.attr({ x: 20, y: 20, w: 100, h: 20 })
 			//.text("(0,0)");
 		
-		/* Manabar - should move to a component probably
-			- The event to change the mana is 'ChangeMana' which accepts an int */
+		/* ManabarBack - A black border for the manabar*/
 		Crafty.e("ManabarBack, Canvas, 2D, Color")
 			.attr({ x: 5, y: 5, w: 102, h: 10, dX: 0, dY: 0})
 			.color('rgb(0,0,0)')
 
+		/*	manabar - shows the amount of mana the player has 
+		
+			ChangeMana - changes the width of the manabar to reflect the player's current mana
+		*/
 		var manabar = Crafty.e("Manabar, DOM, 2D, Color")
 			.attr({ x: 6, y: 6, w: 100, h: 8, dX: 0, dY: 0})
 			.color('rgb(0,0,255)')
 			.bind("ChangeMana", function(current_mana) {
-				//log("Mana will be changed to " + current_mana );
 				if(current_mana < 0) {
 					this.w = 0;
 				}
@@ -525,7 +514,7 @@ $(document).ready(function() {
 			.color('rgb(0,155,255)')
 			.attr({ x: 400, y: 250, w: 15, h: 15 }) */
 	
-		// this event somehow keeps the mousepos entity up to date with the correct coordinates
+		// this event keeps the mousepos entity up to date with the correct coordinates
 		Crafty.addEvent(this, "mousemove", function(e) {
 			//log("MouseX " + e.clientX + " MouseY: " + e.clientY);
 			mousepos.attr({ x: e.clientX , y: e.clientY, w: 100, h: 20 }); 

@@ -1,9 +1,10 @@
-/* This file contains the scanner and parser for the langauge 
+/* 	interpreter.js - contains the scanner, parser, and syn_node declaration.
 
- All in all, the functions take in a string, and output an abstract syntax tree */
-
-
+ All in all, the functions take in a string, and output an abstract syntax tree 
+ 
+*/
 $(document).ready(function() {
+	// Sample log outprint code found on the internet
 	function log(msg) {
 		setTimeout(function() {
 			throw new Error(msg);
@@ -119,49 +120,15 @@ $(document).ready(function() {
 	};
 	/* end of syn_node */
 	
-	
-	// TOKEN_LIST - this should be an ordered list of tuples token_names:pattern_match
-	/* keywords needed to parse expressions
-				Algebraic Binary Operators
-				+
-				-
-				*
-				/
-				%
-
-				Boolean Binary Operators
-				==
-				!=
-				>
-				>=
-				<
-				<=
-				and
-				or
-
-				Extra operators:
-				sqrt
-				^
-				!
-
-				Extra keywords:
-				pi
-				cursor
-	*/
-
 	var operator_list = {};
 
 	// binary operators 
 	operator_list[/(\+|-|\*|\/|%|==|!=|>|<|>=|<=)/] = 'bops';
 
-	// other keywords
-	//operator_list['TOK_CURSOR'] 	= /cursor/;
-	//operator_list['TOK_FIRE'] 	= /fire/;
 
-
-	/* scan - scans the string into tokens
-	 * Input: A string
-	 * Output: an array of tokens
+	/* 	scan - scans the string into tokens
+		Input: 	A string
+		Output: an array of tokens
 
 	*/
 	scan = function(spell) {
@@ -289,29 +256,10 @@ $(document).ready(function() {
 		return found_tok_list;
 	}
 	
-	/* tree shape:
-			  root
-				=
-	name argumentnames body
-						|
-						,
-		name arguments     name arguments
+	/*	parse - turns a token list into a parse tree
 	
-	spell 			::= identifier arguments
-
-	arguments		::= expr
-					| arguments expr
-			
-	expr			::= ident
-					| number
-					| (spell)	
-					| (expr Op expr)
-	
-	*/
-	
-	/* parse will parse a token list
-	   INPUTS - token list
-	   OUTUPTS - abstract syntax tree
+		Input:		token_list - a list of lexical tokens	
+		Output: 	outputs the root of the parse tree
 	 */
 	parse = function(token_list) {
 		// create the root node
@@ -328,8 +276,15 @@ $(document).ready(function() {
 		return root;
 	};	
 
-	/* parse_spell_with_arguments - takes in a token_list and looks for an ident and arguments 
-		Output - returns how far it traversed the token list
+	/*	parse_spell_with_arguments - parses a spell root. Recurs on other spell roots, and also parses binary operator trees.
+	
+		Inputs: 
+			token_list		- the list of tokens that the parser is working on
+			index			- the number containing how many tokens of the token_list have already been parsed
+			current_parent	- the parent in the parse tree that new nodes should be adopted by
+			paren_layer		- how many left parenthesis have been seen before the current token (token_list[index])
+			
+		Output: returns the amount of tokens it has parsed
 	*/
 	parse_spell_with_arguments = function(token_list, index, current_parent, paren_layer) {
 		var counter = 0;
@@ -422,6 +377,17 @@ $(document).ready(function() {
 		}
 		return counter;
 	}
+	
+	/*	contains_operators - Determines if there is an operator before the next right parenthesis.
+	
+		Inputs:
+			token_list	- the list of tokens that the parser is working on
+			index		- the number containing how many tokens of the token_list have already been parsed
+			
+		Outputs:
+			true		- if there is an operator before the next right parenthesis
+			false		- if there is not an operator before the next right parenthesis
+	*/
 	var contains_operators = function(token_list, index) {
 		var paren_layer = 1;
 		for(;index < token_list.length; index++) {
@@ -454,7 +420,7 @@ $(document).ready(function() {
 		}
 	}
 	
-	/* parse_operater_expression - looks at operator expression and creates a parse tree
+	/* parse_operater_expression - looks at an operator expression and creates a parse tree. Recursively evaluates the lhs and rhs.
 		
 		Inputs: 
 			token_list		- the list of tokens

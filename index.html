@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>	
-		<title>Declarative Spell Casting</title>
+		<title>Spell Casting Fun</title>
 
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3/jquery.min.js"></script>
 		<!--<script type="text/javascript" src="http://cdn.craftycomponents.com/crafty-release.js"></script>-->
@@ -12,7 +12,7 @@
 		<link rel="stylesheet" type="text/css" href="style.css">
 		<script type="text/javascript">
 			jQuery(document).ready(function(){
-				list_spell_names();
+				listSpellNames();
 				
 				
 				$("#submit_btn").click(function() {  
@@ -20,52 +20,29 @@
 					var spell_text 		= $("textarea#spell_text").val();
 					var spell_params 	= $("textarea#spell_params").val();
 					//alert("Spell text: " + spell_text);
-					insert_player_spell(spell_name, spell_params, spell_text);
-					list_spell_names();
+					insertPlayerSpell(spell_name, spell_params, spell_text);
+					listSpellNames();
 					return false; 
 				});  
 				
 				$(".spell_name").live('click', (function() {  
 					var clicked_spell_name = $(this).text();
 					$("input#spell_name").val(clicked_spell_name);
-					grab_spell_text(clicked_spell_name);
-					grab_spell_params(clicked_spell_name);
+					grabSpellText(clicked_spell_name);
+					grabSpellParams(clicked_spell_name);
 					//alert(clicked_element);
 					return false; 
 				}));
 			});
-/*
-			// used for when the user clicks on the add spell button
-			$(function() {  
-				$("#submit_btn").click(function() {  
-					var spell_name = $("input#spell_name").val();
-					var spell_text = $("textarea#spell_text").val();
-					//alert("Spell text: " + spell_text);
-					insert_player_spell(spell_name, {}, spell_text);
-					list_spell_names();
-					return false; 
-				});  
-			}); 
-			
-			// when the user clicks on a spell name they have already created
-			$(function() {  
-				$(".spell_name").live('click', (function() {  
-					var clicked_spell_name = $(this).text();
-					grab_spell_text(clicked_spell_name);
-					grab_spell_params(clicked_spell_name);
-					//alert(clicked_element);
-					return false; 
-				}));
-			}); */
  
-			var list_spell_names = function () {
+			var listSpellNames = function () {
 				$("#spell_name_lister").html('');
 				for(var spell_name in player_spells) {
 					//log("Spell name: " + spell_name);
 					$("#spell_name_lister").append('<div id=spell_' + spell_name + ' class=spell_name>' + spell_name + '</div>');
 				}
 			}
-			var grab_spell_text = function (spell_name) {
+			var grabSpellText = function (spell_name) {
 				// save code currently in textarea#spell_text
 				var spell = player_spells[spell_name];
 				if(spell == undefined) {
@@ -76,7 +53,7 @@
 				$("textarea#spell_text").val(spell_text);
 			}
 			
-			var grab_spell_params = function (spell_name) {
+			var grabSpellParams = function (spell_name) {
 				// save code currently in textarea#spell_text
 				var spell = player_spells[spell_name];
 				if(spell == undefined) {
@@ -90,7 +67,7 @@
 		</script>
 	</head>
 	<body>
-		<h1>Declarative Spell Casting</h1>
+		<h1>Spell Casting Fun</h1>
 		<div id="main_horizontal_column">
 			<div id="main_game_box">
 				<div id="game_location">

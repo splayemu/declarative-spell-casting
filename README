@@ -1,7 +1,38 @@
-This does not work atm, but the premise is:
+Spell-casting Interpreter and Game
 
-Writing a spell casting language.
+Create spells by writing spells in a logical language. 
 
-Interpreting the language in Javascript.
+What do you mean by spell-casting?
+	Creating entities that move and interact in a 2d world governed by a spell language.
+	
+What sort of spells can you make with this language?
+	Currently, a user can make projectile spells. I.E. Spells that can accelerate in any direction and speeed.
+	
+How to set it up:
+	1) Pull the source code into a directory
+	2) Open index.html in Chrome or Firefox
+	
+How to create a spell:
+	1) Enter a name in the 'Enter Spell Name Here' box
+	2) Enter what you want the spell to do in the 'Enter Spell Text Here' box
+	3) If you want to give the spell parameters, enter a list of parameters separated by spaces
+	4) Click on the 'Add or Update Spell' button
+	5) If you want the spell to be cast when pressing the 'Space Bar', 
+		- Click on space_bar_to_cast
+		- Change the spell text to say the name of your spell
+		- Click on the 'Add or Update Spell' button
 
-Generating Crafty.js entities.
+Sample Spells:
+	Homing_Fireball:
+		1) First create a spell called 'homing' with the text 'accelerate cursor 1, homing'
+		2) Then create a spell called 'Homing_Fireball' with the text 'shape 6, homing'
+		3) Then click on 'space_bar_to_cast' and change the spell text to say 'Homing_Fireball'
+		
+	Winding_Fireball:
+		1) First create a spell called 'winding' with the parameters 'dir' and text 'accelerate dir 1, winding (dir + 15)'
+		2) Then create a spell called 'Winding_Fireball' with the text 'shape 6, winding (cursor - 80)'
+		3) Then click on space_bar_to_cast and change the spell text to say 'Winding_Fireball'
+
+Thoughts on future development:
+	Player Vs. Player battle arena!
+	

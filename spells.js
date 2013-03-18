@@ -1,12 +1,29 @@
+/* spells.js - file that holds the library spell functions
+
+*/
 $(document).ready(function() {
+	// Sample log outprint code found on the internet
 	function log(msg) {
 		setTimeout(function() {
 			throw new Error(msg);
 		}, 0);
 	}
+
+	/* insert_library_spell - puts a function 
+		Inputs: name 	- a string containing the name of the spell
+				params	- a dictionary containing all the parameters and their types
+				funct	- the function that gets called when the player casts thi corresponding name
+	*/
+	var insert_library_spell = function (name, params, funct) {
+		var spell_info = {'params':params, 'funct':funct};
+		library_spells[name] = spell_info;
+		log("Inserting library spell " + name + " paired with " + spell_info.toString());
+	}	
 	
-	/* activate_library_spell -
-		Arguments: name, argument
+	/* activate_library_spell - looks up and calls a library spell with the arguments passed
+		Inputs: 
+			name		- name of the spell to look up and call
+			argument	- a list of arguments to pass to the spell
 		
 	*/
 	activate_library_spell = function(hostspell, player_id, name, arguments) {
@@ -31,20 +48,16 @@ $(document).ready(function() {
 		return 1;
 	};
 	
-	/* Library calls 
-	 * These are the base functions that manipulate the game world.
-	 * Deriving manacost - 
-	 *
-	 *
-	 */
-	/* shape - creates a movable spell of a certain size and color
-	 * Parameters:
-	 *	element - the element (color) of the spell
-	 *	size 	- the size of the element
-	 * Manacost: 2 * size
-	 * Output: returns the entity created
-	 */
-	 // big issue here is if size is not a number (and instead is a syn_node), it gets confused
+	/*	shape - creates a movable spell of a certain size and color
+		Input:
+			element - the element (color) of the spell
+			size 	- the size of the element
+			
+		Manacost: 2 * size
+		
+		Output: returns the entity created
+	*/
+	// big issue here is if size is not a number (and instead is a syn_node), it gets confused
 	var shape		= function (spell, arguments) {
 		if(arguments.length != 1) {
 			log("Error: shape must only have 1 arguments. Has " + arguments.length + " argument(s) instead.");
@@ -53,13 +66,15 @@ $(document).ready(function() {
 		size = arguments[0];
 		spell.shape(size);
 	}
-	/* accelerate - adds acceleration to a movable spell
-	 * Parameters:
-	 *	spell_id 	- the id for the spell
-	 *	direction 	- the direction of the acceleration
-	 *	amount	 	- the amount of acceleration
-	 * Manacost: amount * size (of entity)
-	 * Output: in game effects
+	/*	accelerate - adds acceleration to a movable spell
+		Inputs:
+			spell_id 	- the id for the spell
+			direction 	- the direction of the acceleration
+			amount	 	- the amount of acceleration
+			
+		Manacost: amount * size (of entity)
+		
+		Output: in game effects
 	 */	
 	var accelerate		= function (spell, arguments) {
 		if(arguments.length != 2) {
@@ -70,44 +85,7 @@ $(document).ready(function() {
 		amount = arguments[1];
 		spell.accelerate(direction, amount);
 	}
-	/* End of Library calls */
-	
-	/* Create the library spells
-	   Each spell consists of:
-
-		name   params  function
-	*/
-	
-	/* insert_library_spell - is a function that inserts the spell
-		Inputs: name 	- a string containing the name of the spell
-				params	- a dictionary containing all the parameters and their types
-				funct	- the spell
-	*/
-
-	var insert_library_spell = function (name, params, funct) {
-		var spell_info = {'params':params, 'funct':funct};
-		library_spells[name] = spell_info;
-		log("Inserting library spell " + name + " paired with " + spell_info.toString());
-	}	
-
-	/* test spells */
-	var test_shape			= function (arguments) {
-		log("Shape is called");
-		for(var i = 0; i < arguments.length; i++) {
-			log("Argument[" + i + "]:" + arguments[i]);
-		}
-	}
-	var test_accelerate 		= function (arguments) {
-		log("Accelerate is called.");
-		for(var i = 0; i < arguments.length; i++) {
-			log("Argument[" + i + "]:" + arguments[i]);
-		}
-	}
 	
 	insert_library_spell("shape", {"spell":"object", "size":"number"}, shape);
 	insert_library_spell("accelerate", {"spell":"object", "direction":"number", "direction":"number"}, accelerate);
-	//library_spells['shape'] = shape;
-	//library_spells['accelerate'] = accelerate;
-	//library_spells['test_shape'] = test_shape;
-	//library_spells['test_accelerate'] = test_accelerate;
 });
