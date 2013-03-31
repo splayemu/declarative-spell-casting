@@ -60,7 +60,46 @@ $(document).ready(function() {
 	}
 
 	/*	game components - components are used by the crafty engine to give methods and values to an entity */
-	
+
+	/*	Manabar - the values and methods useful for managing a manabar */
+	Crafty.c("Manabar", {
+		init: function () {
+			this.requires('2D');
+			this.requires('Color');
+		},
+		manabar: function (width, maximum_mana) {
+			this.attr({ x: 5, y: 5, w: width, h: 8, dX: 0, dY: 0})
+			.color('rgb(0,0,255)')
+			.bind("ChangeMana", function(current_mana) {
+				this.changeMana(current_mana);
+			});
+			this.back = Crafty.e("2D, Color, Canvas")
+				.attr({ x: 5, y: 5, w: width/2, h: 10, dX: 0, dY: 0})
+				.color('rgb(0,0,0)');
+			this.maximum_width = width;
+			this.maximum_mana = maximum_mana;
+			this.width_per_mana = width / maximum_mana;
+			log("Manabar construction with max_mana: " + maximum_mana + " and width " + width);
+			return this;
+			
+		},
+		setMaximumMana: function(maximum_mana) {
+			this.maximum_mana = maximum_mana;
+			this.width_per_mana = this.maximum_width / maximum_mana;			
+		},
+		setWidth: function(width) {
+			this.maximum_width = width;
+			this.width_per_mana = width / maximum_mana;			
+		},
+		changeMana: function(mana) {
+			log("changeMana called with " + mana);
+			if(mana < 0) {
+				this.w = 0;
+			}
+			else this.w = mana * this.width_per_mana;			
+		}
+
+	});
 	/*	PlayerManager - gives the values and methods useful for managing a player
 		
 		Values:
@@ -476,16 +515,16 @@ $(document).ready(function() {
 			.attr({ x: 20, y: 20, w: 100, h: 20 })
 			//.text("(0,0)");
 		
-		/* ManabarBack - A black border for the manabar*/
+		/* ManabarBack - A black border for the manabar
 		Crafty.e("ManabarBack, Canvas, 2D, Color")
 			.attr({ x: 5, y: 5, w: 102, h: 10, dX: 0, dY: 0})
-			.color('rgb(0,0,0)')
+			.color('rgb(0,0,0)')*/
 
 		/*	manabar - shows the amount of mana the player has 
 		
 			ChangeMana - changes the width of the manabar to reflect the player's current mana
 		*/
-		var manabar = Crafty.e("Manabar, DOM, 2D, Color")
+		/*var manabar = Crafty.e("Manabar, DOM, 2D, Color")
 			.attr({ x: 6, y: 6, w: 100, h: 8, dX: 0, dY: 0})
 			.color('rgb(0,0,255)')
 			.bind("ChangeMana", function(current_mana) {
@@ -493,11 +532,13 @@ $(document).ready(function() {
 					this.w = 0;
 				}
 				else this.w = current_mana;
-			})
+			})*/
+		var manabar1 = Crafty.e("Manabar, Canvas")
+			.manabar(100,100)
 			
 		//Main character
 		var player1 = Crafty.e("Player1, PlayerManager, 2D, Canvas, Color, Keyboard, Multiway")
-			.playermanager(100,1, manabar)
+			.playermanager(100,1, manabar1)
 			.color('rgb(0,255,0)')
 			.attr({ x: 150, y: 150, w: 25, h: 25 })
 			.multiway(4, {W: -90, S: 90, D: 0, A: 180})
