@@ -14,7 +14,7 @@
 				}
 				/* Test Implementation of the interpreter */
 				var spells_toks = new Array();
-				spell = 'accelerate dir (dir % 5), changeDir (dir + 1)';
+				spell = 'accelerate 1 cursor, if (steps > 0) (semi_homing (steps - 1))  (accelerate 1 cursor)';
 
 				spells_toks = scan(spell);
 				

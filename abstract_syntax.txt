@@ -7,9 +7,12 @@ assign			::= name argumentnames = sequence
 argumentnames	::= ident
 				| argumentnames ident
 
-sequence 		::= spell
-				| sequence, spell
+sequence 		::= stmt
+				| sequence, stmt
 
+stmt			::= spell
+				| if expr (stmt) (stmt)
+				
 spell 			::= identifier arguments
 
 arguments		::= (expr)
@@ -18,4 +21,5 @@ arguments		::= (expr)
 expr			::= ident
 				| number
 				| (spell)	
-				| (expr Op expr)
+				| (expr BOP expr)
+				| (UOP expr)

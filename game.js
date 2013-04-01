@@ -56,7 +56,7 @@ $(document).ready(function() {
 		var spell_info = {'params':params, 'funct':root_node, 'spell_text':spell_text};
 
 		player_spells[name] = spell_info;
-		log("Inserting player spell " + name + " paired with " + spell_info.toString());		
+		log("Inserting player spell " + name + " paired with " + root_node);		
 	}
 
 	/*	game components - components are used by the crafty engine to give methods and values to an entity */
@@ -288,6 +288,8 @@ $(document).ready(function() {
 			this.parent_id = player_id;
 			this.spell_ast = spell_ast;
 			this.variables = parameters;
+			this.variables["true"] = true;
+			this.variables["false"] = false;			
 			log(this.name + " initialized with player_id: " + this.parent_id);
 			return this;
 		},
@@ -357,6 +359,9 @@ $(document).ready(function() {
 				else if(arguments[i].get_lex_name() == 'TOK_NUMBER') {
 					arguments[i] = arguments[i].get_lex_info();
 				}
+				else if(arguments[i].get_lex_name() == 'TOK_SPELL') {
+					log("Found a spell as an argument");
+				}
 				else {
 					log("Interpreter Error: " + arguments[i].get_lex_name() + " should not be here.");
 					return;					
@@ -371,7 +376,16 @@ $(document).ready(function() {
 			//log("Player_id: " + this.parent_id);
 			Crafty(this.parent_id).decrementMana(1);
 		},
+		/*	pushSpellAst - pushes a spell with arguments to be executed 
+			Inputs: spell_root	- the root of the spell to be added to be executed
+			
+			Desired behavior:	add the spell root to be executed before any other spells 
+								(similar to a stack push)
 		
+		pushSpellAst: function(spell_root) {
+			log("Adding " + name + "'s root " + spell_root);
+			this.spell_ast.unshift_children(spell_root);	
+		},*/
 		/*	activatePlayerSpellSpell	- looks up the player created spell and adds it to the spell tree
 			Inputs:	name		- the name of the spell
 					arguments	- the arguments of the spell

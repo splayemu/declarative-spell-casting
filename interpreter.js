@@ -119,11 +119,11 @@ $(document).ready(function() {
 		return str;
 	};
 	/* end of syn_node */
-	
+	/*
 	var operator_list = {};
 
 	// binary operators 
-	operator_list[/(\+|-|\*|\/|%|==|!=|>|<|>=|<=)/] = 'bops';
+	operator_list[/(\+|-|\*|\/|%|==|!=|>|<|>=|<=)/] = 'bops'; */
 
 
 	/* 	scan - scans the string into tokens
@@ -329,9 +329,6 @@ $(document).ready(function() {
 			var tok_eos_m    = token_list[index + counter].get_lex_name().match(/TOK_EOS/);	
 			var tok_lp_m     = token_list[index + counter].get_lex_name().match(/\(/);	
 			var tok_rp_m     = token_list[index + counter].get_lex_name().match(/\)/);
-			//if (tok_shape_m != null) {
-			//	current_cast.push(token_list[i]);
-			//}
 
 			if (tok_ident_m != null) {
 				current_parent.adopt(token_list[index + counter]);
@@ -378,15 +375,15 @@ $(document).ready(function() {
 		return counter;
 	}
 	
-	/*	contains_operators - Determines if there is an operator before the next right parenthesis.
+	/*	contains_operators - Determines if there is an operator on the same layer
 	
 		Inputs:
 			token_list	- the list of tokens that the parser is working on
 			index		- the number containing how many tokens of the token_list have already been parsed
 			
 		Outputs:
-			true		- if there is an operator before the next right parenthesis
-			false		- if there is not an operator before the next right parenthesis
+			true		- if there is an operator on the same layer
+			false		- if there is not an operator on the same layer
 	*/
 	var contains_operators = function(token_list, index) {
 		var paren_layer = 1;
@@ -397,7 +394,7 @@ $(document).ready(function() {
 			var tok_lp_m     	= token_list[index].get_lex_name().match(/\(/);	
 			var tok_rp_m     	= token_list[index].get_lex_name().match(/\)/);	
 
-			if (tok_operator_m != null) {
+			if (tok_operator_m != null && paren_layer == 1) {
 				//log("contains_operators: Found an operator");
 				return true;
 			}

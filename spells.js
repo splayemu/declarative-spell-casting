@@ -63,12 +63,12 @@ $(document).ready(function() {
 			log("Error: shape must only have 1 arguments. Has " + arguments.length + " argument(s) instead.");
 			return;
 		}
-		size = arguments[0];
+		var size = arguments[0];
 		spell.shape(size);
 	}
 	/*	accelerate - adds acceleration to a movable spell
 		Inputs:
-			spell_id 	- the id for the spell
+			spell	 	- the spell object
 			direction 	- the direction of the acceleration
 			amount	 	- the amount of acceleration
 			
@@ -81,11 +81,36 @@ $(document).ready(function() {
 			log("Error: accelerate must only have 2 arguments");
 			return;
 		}
-		direction = arguments[0];
-		amount = arguments[1];
+		var direction = arguments[0];
+		var amount = arguments[1];
 		spell.accelerate(direction, amount);
+	}
+	/*	cond - chooses between the second and third arguments based on the boolean first argument
+		Inputs:
+			spell		- the spell object
+			bool		- decides whether or not the first or second spell object gets executed
+			spell1_ast	- the ast of the "true" spell
+			spell2_ast	- the ast of the "false" spell
+	
+		Manacost: free?
+		
+		Output: pushes a spell_ast to be executed
+	*/
+	var	cond		= function (spell, arguments) {
+		if(arguments.length != 3) {
+			log("Error: if must have 3 arguments.");
+		}
+		var bool = arguments[0];
+		var spell1_ast = arguments[1];
+		var spell2_ast = arguments[2];
+		
+		if(bool == true)
+			spell.realTimeSpellInterpreter(spell1_ast);
+		else 
+			spell.realTimeSpellInterpreter(spell2_ast);
 	}
 	
 	insert_library_spell("shape", {"spell":"object", "size":"number"}, shape);
-	insert_library_spell("accelerate", {"spell":"object", "direction":"number", "direction":"number"}, accelerate);
+	insert_library_spell("accelerate", {"spell":"object", "direction":"number", "amount":"number"}, accelerate);
+	insert_library_spell("if", {"spell":"object", "conditional_value":"boolean", "spell":"ast", "spell":"ast"}, cond);
 });
