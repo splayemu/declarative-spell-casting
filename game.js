@@ -134,58 +134,52 @@ $(document).ready(function() {
 					Crafty("Spell").each(function() { this.destroy() } );
 				}
 			});
-			/* Cast - Will be functionized. Casts a spell
-				Preconditions: player.mana - spell.manacost > 0
-				Postconditions: spell is cast
-			*/
+
 			this.bind('Cast', function(spell_name_and_arguments) {
 				
 				var spell_name 		= spell_name_and_arguments[0];
 				var spell_arguments = spell_name_and_arguments[1];
-				
-				var spell_info = player_spells[spell_name];
-				if(spell_info == undefined) {
-					log(spell_name + " is not a spell");
-					return;
-				}
-				//var params = spell_info['params'];
-				var params = {};
-				var params_list = spell_info['params'].split(" ");
-				// verify arguments == params
-				for(index in params_list) {
-					log("Adding argument value: " + spell_arguments[index] + " to parameter: " + params_list[index]);
-					params[params_list[index]] = spell_arguments[index];
-				}
-				
-				var spell_root = spell_info['funct'].copy();
-				/* general cast - this looks up the spell in the player spell dict and initializes a Spell entity
-				
-				
-				*/ 
-				log("Cast called with player_id: " + this[0] + " spell_name: " + spell_name);
-				var spell = Crafty.e("Spell")
-					.spell(this[0], spell_name, spell_root, params);	
-						
-				
-				this.active_spells[spell[0]] = spell.getName();
-				
-				// determine manacost of spell and decrement it
-				this.decrementMana(10);
-				//log("Player casts: " + spell[0] + " at the manacost: " + spell.getManaCost());
+				this.cast(spell_name, spell_arguments);
 				
 			});
 		},
 		
 		/* 	playermanager - creates a playermanager entity
 		*/
-		playermanager: function(maximum_mana, mana_regen, manabar) {
+		playermanager: function(maximum_mana, mana_regen, manabar_x, manabar_y, manabar_width) {
 			this.mana = 0;
 			this.maximum_mana = maximum_mana;
 			this.mana_regen = mana_regen;
-			this.manabar = manabar;
 			this.active_spells = {};
+			
+			this.back = Crafty.e("2D, Color, Canvas")
+				.attr({ x: manabar_x, y: manabar_y, w: manabar_width + 2, h: 10, dX: 0, dY: 0})
+				.color('rgb(0,0,0)');
+			this.front = Crafty.e("2D, Color, Canvas")
+				.attr({ x: manabar_x + 1, y: manabar_y + 1, w: manabar_width, h: 8, dX: 0, dY: 0})
+				.color('rgb(0,0,255)');
+			this.manabar_width = manabar_width;
+			this.width_per_mana = manabar_width / maximum_mana;
+			log("Manabar construction with max_mana: " + maximum_mana + " and width " + manabar_width);
+			
 			return this;
 		},
+		setMaximumMana: function(maximum_mana) {
+			this.maximum_mana = maximum_mana;
+			this.width_per_mana = this.manabar_width / maximum_mana;			
+		},
+		setManabarWidth: function(manabar_width) {
+			this.manabar_width = manabar_width;
+			this.width_per_mana = manabar_width / maximum_mana;			
+		},
+		changeMana: function(mana) {
+			//log("changeMana called with " + mana + " width_per_mana: " + this.width_per_mana);
+			if(mana < 0) {
+				this.front.w = 0;
+			}
+			else this.front.w = mana * this.width_per_mana;			
+		},
+		
 		/*	incrementMana - adds the amount to the player and updates the manabar
 			Inputs:
 				amount	- amount to add to the mana
@@ -197,7 +191,7 @@ $(document).ready(function() {
 			}
 			// log("Current Mana: " + this.mana);
 			// update manabar
-			this.manabar.trigger("ChangeMana", this.mana);
+			this.changeMana(this.mana);
 		},
 		/*	decrementMana - subtracts mana from the player and updates the manabar
 			Inputs:
@@ -207,15 +201,42 @@ $(document).ready(function() {
 			this.mana -= amount;
 			// update manabar
 			//log("Decrementing mana to: " + this.mana + " with the amount of " + amount);
-			this.manabar.trigger("ChangeMana", this.mana);
-		}
+			this.changeMana(this.mana);
+		},
+		/*	cast - this looks up the spell in the player spell dict and initializes a Spell entity
+				
+				
+		*/ 
+		cast: function(spell_name, spell_arguments) {
+			var spell_info = player_spells[spell_name];
+			if(spell_info == undefined) {
+				log(spell_name + " is not a spell");
+				return;
+			}
 
+			var params = {};
+			var params_list = spell_info['params'].split(" ");
+			// verify arguments == params
+			// assign argument values to respective parameters
+			for(index in params_list) {
+				log("Adding argument value: " + spell_arguments[index] + " to parameter: " + params_list[index]);
+				params[params_list[index]] = spell_arguments[index];
+			}
+				
+			var spell_root = spell_info['funct'].copy();
+
+			log("Cast called with player_id: " + this[0] + " spell_name: " + spell_name);
+			var spell = Crafty.e("Spell")
+				.spell(this[0], spell_name, spell_root, params);	
+						
+			this.active_spells[spell[0]] = spell.getName();
+		},
 	});
 
 	/*	Collidable - gives the methods and values that allow objects to collide into each other
 	
 		Work in progress
-		
+	*/
 	Crafty.c("Collidable", {
 		init: function() {
 		},
@@ -224,7 +245,7 @@ $(document).ready(function() {
 		collidable: function() {
 			return this;
 		},		
-	}); */
+	}); 
 	
 	/*	PhysicalSpell - component that gives physical 2d properties to a spell. Gives them color and acceleration.
 	
@@ -244,14 +265,7 @@ $(document).ready(function() {
 			this.requires('2D');
 			this.requires('Collision');
 			this.requires('Color');
-		},
-		
-		/*	physicalspell - the constructor for the physicalspell component
-		*/
-		physicalspell: function(size, xStartingPos, yStartingPos, color) {
-			this.attr({ x: xStartingPos, y: yStartingPos, w: size, h: size, dX: 0, dY: 0 })
-			.color(color)
-			.bind('EnterFrame', function () {
+			this.bind('EnterFrame', function () {
 				//hit floor or roof
 				if (this.y <= 0 || this.y >= (playable_height - 10))
 					this.destroy();
@@ -259,9 +273,28 @@ $(document).ready(function() {
 				if (this.x <= 0 || this.x >= (playable_width - 10))
 					this.destroy();
 
+				// check for colisions with colidable objects that aren't you
+				var collisions = this.hit("Collidable");
+				if (collisions != false) {
+					for(each_collision in collisions) {
+						//if(each_collision["obj"] != Crafty(this.parent_id)) {
+							log("Collided with " + each_collision + " and " + each_collision.obj);
+							//this.destroy();				
+						//}
+					}
+				} 
+					
 				this.x += this.dX;
 				this.y += this.dY;
-			})
+			});
+		},
+		
+		/*	physicalspell - the constructor for the physicalspell component
+		*/
+		physicalspell: function(size, xStartingPos, yStartingPos, color) {
+			this.attr({ x: xStartingPos, y: yStartingPos, w: size, h: size, dX: 0, dY: 0 })
+				.color(color);
+
 			return this;
 		},
 		/*	accelerate - adds an acceleration to a physical spell
@@ -524,19 +557,15 @@ $(document).ready(function() {
 		Crafty.init(background_width, background_height);
 		Crafty.background('rgb(127,127,127)');	
 		
-		insertPlayerSpell('fireball', '', 'shape 6, accelerate cursor 2');  
-		insertPlayerSpell('space_bar_to_cast', '', 'fireball');
+		insertPlayerSpell('fireball',			 '', 'shape 6, accelerate cursor 2');  
+		insertPlayerSpell('space_bar_to_cast',	 '', 'fireball');
 		
 		/*	mousepos - stores the position of the mouse */
 		var mousepos = Crafty.e("MousePos, Canvas, 2D, Text")
 			.attr({ x: 20, y: 20, w: 100, h: 20 })
-		
-		var manabar1 = Crafty.e("Manabar")
-			.manabar(5, 5, 100, 200)
 			
-		//Main character
 		var player1 = Crafty.e("Player1, PlayerManager, 2D, Canvas, Color, Keyboard, Multiway")
-			.playermanager(200,1, manabar1)
+			.playermanager(3000, 100, 5, 5, 100)
 			.color('rgb(0,255,0)')
 			.attr({ x: 150, y: 150, w: 25, h: 25 })
 			.multiway(4, {W: -90, S: 90, D: 0, A: 180})
@@ -549,9 +578,9 @@ $(document).ready(function() {
 	
 	
 		//Target Dummy
-		/*var targetDummy = Crafty.e("TargetDummy, 2D, Canvas, Color")
-			.color('rgb(0,155,255)')
-			.attr({ x: 400, y: 250, w: 15, h: 15 }) */
+		//var targetDummy = Crafty.e("TargetDummy, 2D, Canvas, Color, Collidable")
+		//	.color('rgb(0,155,255)')
+		//	.attr({ x: 400, y: 250, w: 15, h: 15 })
 	
 		// this event keeps the mousepos entity up to date with the correct coordinates
 		Crafty.addEvent(this, "mousemove", function(e) {
