@@ -263,7 +263,7 @@ $(document).ready(function() {
 	Crafty.c("PhysicalSpell", {
 		init: function() {
 			this.requires('2D');
-			this.requires('Collision');
+			//this.requires('Collision');
 			this.requires('Color');
 			this.bind('EnterFrame', function () {
 				//hit floor or roof
@@ -274,7 +274,7 @@ $(document).ready(function() {
 					this.destroy();
 
 				// check for colisions with colidable objects that aren't you
-				var collisions = this.hit("Collidable");
+			/*	var collisions = this.hit("Collidable");
 				if (collisions != false) {
 					for(each_collision in collisions) {
 						//if(each_collision["obj"] != Crafty(this.parent_id)) {
@@ -282,7 +282,7 @@ $(document).ready(function() {
 							//this.destroy();				
 						//}
 					}
-				} 
+				} */
 					
 				this.x += this.dX;
 				this.y += this.dY;
@@ -385,7 +385,7 @@ $(document).ready(function() {
 
 			var parent = Crafty(this.parent_id);
 			
-			this.addComponent("2D, Canvas, Collision, PhysicalSpell").physicalspell(size, parent._x, parent._y, 'rgb(255,10,10)');
+			this.addComponent("2D, Canvas, PhysicalSpell").physicalspell(size, parent._x, parent._y, 'rgb(255,10,10)');
 		},
 		
 		/* 	realTimeSpellInterpreter - function that traverses the spell parse tree, looks up and calls library spells, 
