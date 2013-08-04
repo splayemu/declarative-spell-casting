@@ -110,7 +110,15 @@ $(document).ready(function() {
 			spell.realTimeSpellInterpreter(spell2_ast);
 	}
 	
+    var destroy     = function (spell, arguments) {
+		if(arguments.length != 0) {
+			log("Error: destroy must have 0 arguments.");
+		}
+        spell.destroy();
+    }
+
 	insert_library_spell("shape", {"spell":"object", "size":"number"}, shape);
 	insert_library_spell("accelerate", {"spell":"object", "direction":"number", "amount":"number"}, accelerate);
 	insert_library_spell("if", {"spell":"object", "conditional_value":"boolean", "spell":"ast", "spell":"ast"}, cond);
+	insert_library_spell("destroy", {"spell":"object"}, destroy);
 });
