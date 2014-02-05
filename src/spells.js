@@ -2,12 +2,6 @@
 
 */
 $(document).ready(function() {
-	// Sample log outprint code found on the internet
-	function log(msg) {
-		setTimeout(function() {
-			throw new Error(msg);
-		}, 0);
-	}
 
 	/* insert_library_spell - puts a function 
 		Inputs: name 	- a string containing the name of the spell
@@ -17,7 +11,7 @@ $(document).ready(function() {
 	var insert_library_spell = function (name, params, funct) {
 		var spell_info = {'params':params, 'funct':funct};
 		library_spells[name] = spell_info;
-		log("Inserting library spell " + name + " paired with " + spell_info.toString());
+		console.log("Inserting library spell " + name + " paired with " + spell_info.toString());
 	}	
 	
 	/* activate_library_spell - looks up and calls a library spell with the arguments passed
@@ -29,18 +23,18 @@ $(document).ready(function() {
 	activate_library_spell = function(hostspell, player_id, name, arguments) {
 		spell_info = library_spells[name];
 		if(spell_info == undefined) {
-			log(name + " is not a valid library spell");
+			console.log(name + " is not a valid library spell");
 			return 0;
 		}
 		var spell = spell_info['funct'];
 		var parameters = spell_info['params'];
 		//for(var i = 0; i < children.length; i++) {
-		//	log("Child[" + i + "]: " + children[i].get_lex_info());
+		//	console.log("Child[" + i + "]: " + children[i].get_lex_info());
 		//}
-		log(name + " recieved " + arguments.length + " arguments.");
+		console.log(name + " recieved " + arguments.length + " arguments.");
 		// verfiy that the arguments are compatible with the parameters
 		//if(arguments.length != parameters.length) {
-		//	log("Error: Expected " + parameters.length + " and recieved " + arguments.length);
+		//	console.log("Error: Expected " + parameters.length + " and recieved " + arguments.length);
 		//	return -1;
 		//}
 		// calculate manacost
@@ -60,7 +54,7 @@ $(document).ready(function() {
 	// big issue here is if size is not a number (and instead is a syn_node), it gets confused
 	var shape		= function (spell, arguments) {
 		if(arguments.length != 1) {
-			log("Error: shape must only have 1 arguments. Has " + arguments.length + " argument(s) instead.");
+			console.log("Error: shape must only have 1 arguments. Has " + arguments.length + " argument(s) instead.");
 			return;
 		}
 		var size = arguments[0];
@@ -78,7 +72,7 @@ $(document).ready(function() {
 	 */	
 	var accelerate		= function (spell, arguments) {
 		if(arguments.length != 2) {
-			log("Error: accelerate must only have 2 arguments");
+			console.log("Error: accelerate must only have 2 arguments");
 			return;
 		}
 		var direction = arguments[0];
@@ -98,7 +92,7 @@ $(document).ready(function() {
 	*/
 	var	cond		= function (spell, arguments) {
 		if(arguments.length != 3) {
-			log("Error: if must have 3 arguments.");
+			console.log("Error: if must have 3 arguments.");
 		}
 		var bool = arguments[0];
 		var spell1_ast = arguments[1];
@@ -112,7 +106,7 @@ $(document).ready(function() {
 	
     var destroy     = function (spell, arguments) {
 		if(arguments.length != 0) {
-			log("Error: destroy must have 0 arguments.");
+			console.log("Error: destroy must have 0 arguments.");
 		}
         spell.destroy();
     }

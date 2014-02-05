@@ -7,29 +7,25 @@
 		<script type="text/javascript" src="interpreter.js"></script>
 		<script type="text/javascript">
 			$(document).ready(function() {
-				function log(msg) {
-					setTimeout(function() {
-						throw new Error(msg);
-					}, 0);
-				}
+
 				/* Test Implementation of the interpreter */
 				var spells_toks = new Array();
 				spell = 'accelerate 1 cursor, if (steps > 0) (semi_homing (steps - 1))  (accelerate 1 cursor)';
 
 				spells_toks = scan(spell);
 				
-				log("Starting SCAN");	
+				console.log("Starting SCAN");	
 				for(var i = 0; i < spells_toks.length;i++) {
-					log('tok[' + i + ']: ' + spells_toks[i].get_lex_name());
+					console.log('tok[' + i + ']: ' + spells_toks[i].get_lex_name());
 				}
-				log("Ending SCAN\n");
+				console.log("Ending SCAN\n");
 				
-				log("Starting PARSE");
+				console.log("Starting PARSE");
 				var root_node = parse(spells_toks);
-				log("Ending PARSE\n");
+				console.log("Ending PARSE\n");
 				
 				tree_str = root_node.toString();
-				log('traversal : ' + tree_str);
+				console.log('traversal : ' + tree_str);
 			});
 		</script>
 

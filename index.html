@@ -3,13 +3,14 @@
 	<head>	
 		<title>Spell Casting Fun</title>
 
-		<script type="text/javascript" src="jquery-1.9.1.min.js"></script>
+		<script type="text/javascript" src="lib/jquery-1.9.1.min.js"></script>
 		<!--<script type="text/javascript" src="http://cdn.craftycomponents.com/crafty-release.js"></script>-->
-		<script type="text/javascript" src="crafty.js"></script>
-		<script type="text/javascript" src="interpreter.js"></script>
-		<script type="text/javascript" src="game.js"></script>
-		<script type="text/javascript" src="spells.js"></script>
-		<link rel="stylesheet" type="text/css" href="style.css">
+		<script type="text/javascript" src="lib/crafty.js"></script>
+		<script type="text/javascript" src="src/interpreter.js"></script>
+		<script type="text/javascript" src="src/game.js"></script>
+        <script type="text/javascript" src="src/components.js"></script>
+		<script type="text/javascript" src="src/spells.js"></script>
+		<link rel="stylesheet" type="text/css" href="style/style.css">
 		<script type="text/javascript">
 			jQuery(document).ready(function(){
 				listPlayerSpellNames();
@@ -54,7 +55,7 @@
 				/*
 				$("#spell_name_lister").html('<ul>');
 				for(var spell_name in player_spells) {
-					//log("Spell name: " + spell_name);
+					//console.log("Spell name: " + spell_name);
 					$("#spell_name_lister").append('<li id=spell_' + spell_name + ' class=spell_name>' + spell_name + '</li>');
 				}
 				$("#spell_name_lister").append('</ul>');
