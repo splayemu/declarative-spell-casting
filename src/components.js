@@ -87,6 +87,7 @@ Crafty.c("PlayerManager", {
 		this.mana = 0;
 		this.maximum_mana = maximum_mana;
 		this.mana_regen = mana_regen;
+        this.player_spells = {};
 		this.active_spells = {};
 		
 		this.back = Crafty.e("2D, Color, Canvas")
@@ -140,12 +141,34 @@ Crafty.c("PlayerManager", {
 		//console.log("Decrementing mana to: " + this.mana + " with the amount of " + amount);
 		this.changeMana(this.mana);
 	},
+    /*	insertPlayerSpell 	- creates the spell object and adds it to the player_spells dictionary
+        Inputs:	name 		- the string containing the name of the spell
+                parameters	- a dictionary of the arguments and their types
+                spell_text	- the string containing the text of the spell
+    */
+    insertSpell: function (name, params, spell_text) {
+        var spells_toks = scan(spell_text);	
+        /*	console.log("Starting SCAN");	
+        for(var i = 0; i < spells_toks.length;i++) {
+            console.log('tok[' + i + ']: ' + spells_toks[i].get_lex_name());
+        }
+        console.log("Ending SCAN\n"); */
+        
+        //console.log("Starting PARSE");
+        var root_node = parse(spells_toks);
+        //console.log("Ending PARSE\n");
+        var spell_info = {'params':params, 'funct':root_node, 'spell_text':spell_text};
+
+        this.player_spells[name] = spell_info;
+        console.log("Inserting player spell " + name + " paired with " + root_node);
+        return this;		
+    },
 	/*	cast - this looks up the spell in the player spell dict and initializes a Spell entity
 			
 			
 	*/ 
 	cast: function(spell_name, spell_arguments) {
-		var spell_info = player_spells[spell_name];
+		var spell_info = this.player_spells[spell_name];
 		if(spell_info == undefined) {
 			console.log(spell_name + " is not a spell");
 			return;
@@ -204,10 +227,10 @@ Crafty.c("PhysicalSpell", {
 		this.requires('Color');
 		this.bind('EnterFrame', function () {
 			//hit floor or roof
-			if (this.y <= 0 || this.y >= (playable_height - 10))
+			if (this.y <= 0 || this.y >= (Game.playable_height - 10))
 				this.destroy();
 
-			if (this.x <= 0 || this.x >= (playable_width - 10))
+			if (this.x <= 0 || this.x >= (Game.playable_width - 10))
 				this.destroy();
 
 			// check for colisions with colidable objects that aren't you
@@ -381,7 +404,7 @@ Crafty.c("Spell", {
 			}
 		}
 		//var parameters = [this].concat(arguments);
-		var spell_success = activate_library_spell(this, this.parent_id, spell_name, arguments);
+		var spell_success = Library.activate_library_spell(this, this.parent_id, spell_name, arguments);
 		if(!spell_success) {
 			console.log("Trying the player spell library");
 			this.activatePlayerSpellSpell(spell_name, arguments);
@@ -409,7 +432,7 @@ Crafty.c("Spell", {
 	*/
 	activatePlayerSpellSpell: function(name, spell_arguments) {
 		console.log("Trying to cast " + name);
-		var spell_info = player_spells[name];
+		var spell_info = Crafty(this.parent_id).player_spells[name];
 		if(spell_info == undefined) {
 			console.log(name + " is not a spell");
 			return;
