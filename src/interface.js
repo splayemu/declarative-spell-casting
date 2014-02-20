@@ -1,110 +1,61 @@
 Interface = {
-    listPlayerSpellNames: function () {
-        $("#spell_name_lister").html('');				
-        // create an empty array for building up the html output
-        var html = [];
 
-        // create a table
-        html.push('<ul>');
-
-        for(var spell_name in Game.main_player.player_spells) {
-            // do some sanity checking
-            if (null != spell_name) {
-                // add a row to the table
-                html.push('<li id=spell_' + spell_name + ' class=spell_name>' + spell_name + '</li>');
-            }
-        }
-
-        // close the table
-        html.push('</ul>');
-
-        // find the results div in the DOM and set its HTML content
-        document.getElementById("spell_name_lister").innerHTML = html.join("");
-        
+    mouseX: 0,
+    mouseY: 0,
+    paper: undefined,
+	
+    mousePos: function (e) {
+        Interface.mouseX = e.pageX - 2;
+        Interface.mouseY = e.pageY - 2;
+        //Interface.mousey.attr({"x": Interface.mouseX - 5, "y": Interface.mouseY - 5});
+        //console.log("Mouse moved (" + Interface.mouseX + "," + Interface.mouseY + ")");
+        return true;
     },
     
-    listLibrarySpellNames: function () {	
-        $("#spell_name_lister").html('');	
+	getMousePos: function () {
+		return {"x": Interface.mouseX, "y":Interface.mouseY};
+	},
+	
+    getCursorDirection: function (myX, myY) {
+        //var yDifference = Interface.mouseX - (myY + Game.canvas_top);
+        //var xDifference = Interface.mouseY - (myX + Game.canvas_left);
+        var xDifference = Interface.mouseX - (myX + Game.canvas_left);
+        var yDifference = Interface.mouseY - (myY + Game.canvas_top);
 
-        // create an empty array for building up the html output
-        var html = [];
-
-        // create a table
-        html.push('<ul>');
-
-        for(var spell_name in Library.getSpells()) {
-            // do some sanity checking
-            if (null != spell_name) {
-                // add a row to the table
-                html.push('<li id=spell_' + spell_name + ' class=spell_name>' + spell_name + '</li>');
-            }
-        }
-
-        // close the table
-        html.push('</ul>');
-
-        // find the results div in the DOM and set its HTML content
-        document.getElementById("spell_name_lister").innerHTML = html.join("");
-        
-    },			
-
-
-    grabSpellText: function (spell_name) {
-        // save code currently in textarea#spell_text
-        var spell = Game.main_player.player_spells[spell_name];
-        if(spell == undefined) {
-            alert("Error: " + spell_name + " is not a spell");
-            return false;
-        }
-        var spell_text = spell['spell_text'];
-        $("textarea#spell_text").val(spell_text);
+        //console.log("xDifference: " + xDifference + " yDifference: " + yDifference);
+        //console.log("hypDist: " + hypDist);
+        //console.log("Angle: " + Math.atan2(xDifference, yDifference) * (180 / Math.PI));
+        return Math.atan2(xDifference, yDifference) * (180 / Math.PI);
     },
+	
+	movePlayer: function (e) {
+		console.log("Mouse clicked.");
+		Game.main_player.moveTowards(Interface.mouseX,Interface.mouseY);
+		Game.endpoint.moveTo(Interface.mouseX, Interface.mouseY);
+	},
 
-    grabSpellParams: function (spell_name) {
-        // save code currently in textarea#spell_text
-        var spell = Game.main_player.player_spells[spell_name];
-        if(spell == undefined) {
-            alert("Error: " + spell_name + " is not a spell");
-            return false;
-        }
-        var spell_params = spell['params'];
-        $("textarea#spell_params").val(spell_params);
-    },
-    
     init: function () {
-        Interface.listPlayerSpellNames();
-        var spell_tab = "player_spells_tab";
-        $("#submit_btn").click(function() {  
-            var spell_name 		= $("input#spell_name").val();
-            var spell_text 		= $("textarea#spell_text").val();
-            var spell_params 	= $("textarea#spell_params").val();
-            //alert("Spell text: " + spell_text);
-            Game.main_player.insertSpell(spell_name, spell_params, spell_text);
-            Interface.listPlayerSpellNames();
-            return false; 
-        });  
-        
-        $(document).on("click", ".spell_name", (function() {  
-            var clicked_spell_name = $(this).text();
-            $("input#spell_name").val(clicked_spell_name);
-            Interface.grabSpellText(clicked_spell_name);
-            Interface.grabSpellParams(clicked_spell_name);
-            //alert(clicked_element);
-            return false; 
-        }));
-        
-        $(".tab").on('click', (function() {  
-            var clicked_spell_type = $(this).attr('id');
+        document.onmousemove = function (e) {Interface.mousePos(e);};
 
-            if (clicked_spell_type != spell_tab && clicked_spell_type == "player_spells_tab") {
-                Interface.listPlayerSpellNames();
-            }
-            else if (clicked_spell_type != spell_tab && clicked_spell_type == "library_spells_tab") {
-                Interface.listLibrarySpellNames();					
-            }
-            spell_tab = clicked_spell_type;
-            //alert(clicked_spell_type);				
-            return false; 
-        }));   
+        var viewport_width = window.innerWidth - 64 ,
+            viewport_height = window.innerHeight - 64;
+        
+        var tile_size = 16;
+        var num_tiles_width = Math.floor(viewport_width / tile_size);
+        var num_tiles_height= Math.floor(viewport_height / tile_size);        
+
+        // start crafty
+        var crafty_div = document.getElementById('cr-stage');
+        var position = crafty_div.getBoundingClientRect();
+        var x = position.left;
+        var y = position.top;
+        Game.init(viewport_width, viewport_height, x, y, tile_size);       
+
+        
+        // start Raphael
+        Interface.paper = Raphael(x, y, num_tiles_width * tile_size, num_tiles_height * tile_size);
+        Interface.mousey = Interface.paper.rect(Interface.mouseX, Interface.mouseY, 10, 10).attr({"fill": "black"}); 
+		Interface.line   = Interface.paper.rect(0, 0, 100, 1); 
+
     },
 }

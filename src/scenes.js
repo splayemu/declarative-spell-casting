@@ -1,9 +1,5 @@
 Crafty.scene("Main", function() {       
 
-	/*	mousepos - stores the position of the mouse */
-	var mousepos = Crafty.e("MousePos, Canvas, 2D, Text")
-		.attr({ x: 20, y: 20, w: 100, h: 20 })
-
     // A 2D array to keep track of all occupied tiles
     this.occupied = new Array(Game.map_grid.width);
     for (var i = 0; i < Game.map_grid.width; i++) {
@@ -12,44 +8,76 @@ Crafty.scene("Main", function() {
             this.occupied[i][y] = false;
         }
     }
-
-	
-
-
-
+    
+    var x_start = Math.floor(Game.map_grid.width / 4);
+    var y_start = Math.floor(Game.map_grid.height / 4);
+    var width = Math.floor(Game.map_grid.width * 3 / 4);
+    var height = Math.floor(Game.map_grid.height * 3 / 4);
+    console.log("Creating boundary rocks with " + width + " " + height);
     for (var x = 0; x < Game.map_grid.width; x++) {
         for (var y = 0; y < Game.map_grid.height; y++) {
-            var at_edge = x == 0 || x == Game.map_grid.width - 1 || y == 0 || y == Game.map_grid.height - 1;
+            var at_edge = x == x_start || x == width - 1 
+                       || y == y_start || y == height - 1;
         
             if (at_edge) {
                 // Place a rock entity at the current tile
                 Crafty.e('Rock').at(x, y);
                 this.occupied[x][y] = true;
             } 
-            else {
+            /*else {
                 Crafty.e('Sand').at(x,y);
                 this.occupied[x][y] = true;
-            }
+            }*/
         }
     }
-    
-    Game.main_player = Crafty.e("PlayerManager, PlayerCharacter, Keyboard")
-		.playermanager(3000, 100, 5, 5, 100)
-        .at(5, 5)
-		.bind("KeyDown", function(e) {
-			var spell_name = 'space_bar_to_cast';
-			if (this.isDown('SPACE')) {
-				this.trigger("Cast", [spell_name, []]);
-			}
-		})
-        .insertSpell('fireball',			 '', 'shape 6, accelerate cursor 2')  
-        .insertSpell('space_bar_to_cast',	 '', 'fireball');
+ 
 
+	/* mousepos - stores the position of the mouse */
+	var mousepos = Crafty.e("Actor, Text")
+		.attr({ x: 20, y: 20, w: 100, h: 20 })
+		.text('lel');
+ 	
+	Game.endpoint = Crafty.e("Endpoint")
+        .at(0, 0);
+ 
+    Game.main_player = Crafty.e("PlayerCharacter, Keyboard")
+        .at(x_start + 1, y_start + 1)
+		.bind("KeyDown", function(e) {
+			if (this.isDown('SPACE')) {
+                var playerPos = Game.main_player.at();
+                Crafty.e('Projectile')
+                    .at(playerPos.x, playerPos.y)
+					.projectile(5, mousepos.getDirection(playerPos.x, playerPos.y), 1);
+
+                    //.projectile(5, Interface.getCursorDirection(Game.main_player.x + Crafty.viewport.x, Game.main_player.y + Crafty.viewport.y), 1);
+			    //console.log("viewportX: " + Crafty.viewport.x + " viewportY: " + Crafty.viewport.y);
+				//console.log("Player x: " + (Game.main_player.x + Crafty.viewport.x)
+				//          + " y: " + (Game.main_player.y + Crafty.viewport.y));
+				//var mouse = Interface.getMousePos();
+				//console.log("MouseX: " + mouse.x + " MouseY: " + mouse.y);
+  				//Interface.drawLineToCursor(Game.main_player.x, Game.main_player.y);
+				//this.trigger("Cast", [spell_name, []]);
+			}
+		});
+
+
+		
 	// this event keeps the mousepos entity up to date with the correct coordinates
 	Crafty.addEvent(this, "mousemove", function(e) {
-		//console.console.log("MouseX " + e.clientX + " MouseY: " + e.clientY);
-		mousepos.attr({ x: e.clientX , y: e.clientY, w: 100, h: 20 }); 
+		//console.log("MouseX " + e.clientX + " MouseY: " + e.clientY);
+		mousepos.attr({ x: e.clientX - Crafty.viewport.x - Game.canvas_left, y: e.clientY - Crafty.viewport.y - Game.canvas_top, w: 100, h: 20 });
 	});
+
+	Crafty.addEvent(this, "mousedown", function(e) {
+
+		var mousePos = mousepos.at();
+		console.log("Clicked. with mouse position x:" + mousePos.x + " and y: " + mousePos.y);
+		Game.endpoint.moveTo(mousePos.x, mousePos.y);
+		Game.main_player.moveTowards(mousePos.x, mousePos.y);
+	});
+	
+		
+    Crafty.viewport.follow(Game.main_player, 0, 0);
 });
 
 // Loading scene
@@ -62,13 +90,16 @@ Crafty.scene('Loading', function(){
     .attr({ x: 0, y: Game.height()/2 - 24, w: Game.width() });
     
     // Load our sprite map image
-    Crafty.load(['assets/basictiles.png'], function(){
+    Crafty.load(['assets/basictiles.png', 'assets/64fun.png'], function(){
         Crafty.sprite(16, 'assets/basictiles.png', {
             spr_rock:    [7, 1],
             spr_sand:    [2, 1],
             spr_bush:    [6, 3],
             spr_village: [3, 5],
             spr_player:  [0, 8],
+        });
+        Crafty.sprite(64, 'assets/64fun.png', {
+            spr_spell:    [8, 10],
         });
         
         // Now that our sprites are ready to draw, start the game
