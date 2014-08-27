@@ -28,9 +28,9 @@ Game = {
         return this.map_grid.height * this.map_grid.tile.height;
     },   
     
-	getPlayerCoords: function () {
-	    return {"x": Game.main_player.x, "y": Game.main_player.y };
-	},
+    getPlayerCoords: function () {
+        return {"x": Game.main_player.x, "y": Game.main_player.y };
+    },
 	
     main_player: undefined,
     endpoint: undefined,
@@ -51,7 +51,7 @@ Game = {
         Game.canvas_left = x;
         Crafty.init(Game.game_area.width, Game.game_area.height);
         Crafty.viewport.init(Game.game_area.playable_width, Game.game_area.playable_height);
-	    Crafty.background('rgb(244,224,163)');	
+        Crafty.background('rgb(244,224,163)');	
         
         Library.init();
         Crafty.scene('Loading');

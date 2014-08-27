@@ -1,8 +1,50 @@
-	body {
-		color:black;
-		background-color: #C2D6FF;
-		font-family: 'McLaren', serif;
-		font-size: 18px;
-	}
+    body {
+        color:black;
+        background-color: #C2D6FF;
+        font-family: 'McLaren', serif;
+        font-size: 18px;
+    }
+    
+    li {
+        font-size: 12px;
+    }
 
+    #spellPage {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        width: 400px;
+        height: 400px;
+        background: white;
+    }
+    .spellBookAnimation {
+        animation-duration: 3s;
+        animation-direction: alternate;
+        animation-name: slidein;
+    }
+    #name {
+        position: relative;
+        height: 15%;
+        width: 100%;
+        background: gray;
+    }
+    #contents {
+        position: relative;
+        height: 75%;
+        width: 100%;
+        background: gray;
+
+    }
 			
+
+    @keyframes slidein {
+      from {
+        margin-left: 100%;
+        width: 100%; 
+      }
+    
+      to {
+        margin-left: 0%;
+        width: 100%;
+      }
+    }

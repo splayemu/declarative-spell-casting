@@ -42,13 +42,18 @@ Crafty.scene("Main", function() {
  
     Game.main_player = Crafty.e("PlayerCharacter, Keyboard")
         .at(x_start + 1, y_start + 1)
-		.bind("KeyDown", function(e) {
-			if (this.isDown('SPACE')) {
-                var playerPos = Game.main_player.at();
-                Crafty.e('Projectile')
-                    .at(playerPos.x, playerPos.y)
-					.projectile(5, mousepos.getDirection(playerPos.x, playerPos.y), 1);
-
+        .bind("KeyDown", function(e) {
+            if(Interface.focus === false) {
+                if (this.isDown('B')) {
+                    console.log('toggling spellbook');
+                    Interface.ui.toggleSpellBook();
+                }
+        	if (this.isDown('SPACE')) {
+                    var playerPos = Game.main_player.at();
+                    Crafty.e('Projectile')
+                        .at(playerPos.x, playerPos.y)
+                        .projectile(5, mousepos.getDirection(playerPos.x, playerPos.y), 1);
+        
                     //.projectile(5, Interface.getCursorDirection(Game.main_player.x + Crafty.viewport.x, Game.main_player.y + Crafty.viewport.y), 1);
 			    //console.log("viewportX: " + Crafty.viewport.x + " viewportY: " + Crafty.viewport.y);
 				//console.log("Player x: " + (Game.main_player.x + Crafty.viewport.x)
@@ -58,7 +63,8 @@ Crafty.scene("Main", function() {
   				//Interface.drawLineToCursor(Game.main_player.x, Game.main_player.y);
 				//this.trigger("Cast", [spell_name, []]);
 			}
-		});
+           }
+        });
 
 
 		
@@ -69,11 +75,12 @@ Crafty.scene("Main", function() {
 	});
 
 	Crafty.addEvent(this, "mousedown", function(e) {
-
-		var mousePos = mousepos.at();
-		console.log("Clicked. with mouse position x:" + mousePos.x + " and y: " + mousePos.y);
-		Game.endpoint.moveTo(mousePos.x, mousePos.y);
-		Game.main_player.moveTowards(mousePos.x, mousePos.y);
+            if(e.buttons === 2) {
+	        var mousePos = mousepos.at();
+	        console.log("Clicked. with mouse position x:" + mousePos.x + " and y: " + mousePos.y);
+	        Game.endpoint.moveTo(mousePos.x, mousePos.y);
+	        Game.main_player.moveTowards(mousePos.x, mousePos.y);
+            }
 	});
 	
 		

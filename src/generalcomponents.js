@@ -122,8 +122,7 @@ Crafty.c("Projectile", {
 // This is the player-controlled character
 Crafty.c('PlayerCharacter', {
     init: function() {
-        this.requires('Actor, Fourway, Collision, spr_player, SpriteAnimation, ')
-            .fourway(4)
+        this.requires('Actor, Collision, spr_player, SpriteAnimation, ')
             .stopOnSolids()
 			.stopAtEndpoint()
             .reel('PlayerMovingUp',    8, [[4, 8], [5,8]])

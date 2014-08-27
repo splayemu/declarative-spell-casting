@@ -4,28 +4,88 @@
 Library = (function () {
     var my = {};
     
-    var library = {};
+    var librarySpells = {
+        spells: [],
+        spellPrototype: {
+            name: "undefined",
+            description: "undefined",
+            parameters: "undefined",
+            funct: "undefined",
+            toString: function () {
+                return this.name;
+            }
+        },
+        createSpell: function (name, description, funct, parameters) {
+            var newSpell = Object.create(this.spellPrototype);
+            newSpell.name = name;
+            newSpell.description = description;
+            newSpell.funct = funct;
+            newSpell.parameters = parameters;
+            this.spells.push(newSpell);
+            return newSpell;
+        },
+    };
+
+    var playerSpells = {
+        spells: [],
+        spellPrototype: {
+            name: "undefined",
+            contents: "undefined",
+            toString: function() {
+                return this.name;
+            }
+        },
+        createSpell: function (name, contents) {
+            var newSpell = Object.create(this.spellPrototype);
+            newSpell.name = name;
+            newSpell.contents = contents;
+            this.spells.push(newSpell);
+            return newSpell;
+        },
+        // get a list of the names
+        // get the object of a particular one for editing
+        // get the object of a particular one for casting 
+    };
+
+    var spellMapping = {};
+
+    my.addPlayerSpell = function (name, contents) {
+        var spell = playerSpells.createSpell(name, contents);
+        spellMapping[name] = spell;
+        console.log("Inserting player spell " + name);
+    }
+
+    my.getSpell = function (name) {
+        spell = spellMapping[name];
+        if(spell === undefined) {
+            console.log(name + " is not a valid spell");
+            return 0;
+        }
+        return spell;
+    }
+
+    my.getLibrarySpells = function () {
+        return librarySpells.spells;
+    }
+        
+    my.getPlayerSpells = function () {
+        return playerSpells.spells;
+    }
     
     /* insert_library_spell - puts a function 
         Inputs: name 	- a string containing the name of the spell
                 params	- a dictionary containing all the parameters and their types
                 funct	- the function that gets called when the player casts thi corresponding name
     */
-    var insert_library_spell = function (name, params, funct) {
-        var spell_info = {'params':params, 'funct':funct};
-        library[name] = spell_info;
-        console.log("Inserting library spell " + name + " paired with " + spell_info.toString());
+    var addLibrarySpell = function (name, description, params, funct) {
+        
+        // var spell_info = {'params':params, 'funct':funct};
+        var spell = librarySpells.createSpell(name, description, params, funct);
+        spellMapping[name] = spell;
+        console.log("Inserting library spell " + name);
     }
 
-    my.init = function() {
-        insert_library_spell("shape", {"spell":"object", "size":"number"}, shape);
-        insert_library_spell("accelerate", {"spell":"object", "direction":"number", "amount":"number"}, accelerate);
-        insert_library_spell("if", {"spell":"object", "conditional_value":"boolean", "spell":"ast", "spell":"ast"}, cond);
-        insert_library_spell("destroy", {"spell":"object"}, destroy);
-    }	
-    my.getSpells = function() {
-        return library;
-    }
+
     /* activate_library_spell - looks up and calls a library spell with the arguments passed
         Inputs: 
             name		- name of the spell to look up and call
@@ -33,13 +93,13 @@ Library = (function () {
         
     */
     my.activate_library_spell = function(hostspell, player_id, name, arguments) {
-        spell_info = library[name];
-        if(spell_info == undefined) {
+        spell = spellMapping[name];
+        if(spell == undefined) {
             console.log(name + " is not a valid library spell");
             return 0;
         }
-        var spell = spell_info['funct'];
-        var parameters = spell_info['params'];
+        var spellFunct = spell.funct;
+        var spellParameters = spell.parameters;
         //for(var i = 0; i < children.length; i++) {
         //	console.log("Child[" + i + "]: " + children[i].get_lex_info());
         //}
@@ -50,7 +110,7 @@ Library = (function () {
         //	return -1;
         //}
         // calculate manacost
-        spell(hostspell, arguments);
+        spellFunct(hostspell, arguments);
         return 1;
     };
 
@@ -122,6 +182,13 @@ Library = (function () {
         }
         spell.destroy();
     }
+
+    my.init = function() {
+        addLibrarySpell("shape", "", {"spell":"object", "size":"number"}, shape);
+        addLibrarySpell("accelerate", "", {"spell":"object", "direction":"number", "amount":"number"}, accelerate);
+        addLibrarySpell("if", "", {"spell":"object", "conditional_value":"boolean", "spell":"ast", "spell":"ast"}, cond);
+        addLibrarySpell("destroy", "", {"spell":"object"}, destroy);
+    }	
     
     return my;
 }());
