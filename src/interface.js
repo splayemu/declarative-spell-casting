@@ -15,9 +15,9 @@ Interface = {
         return true;
     },
     
-	getMousePos: function () {
-	    return {"x": Interface.mouseX, "y":Interface.mouseY};
-	},
+    getMousePos: function () {
+        return {"x": Interface.mouseX, "y":Interface.mouseY};
+    },
 	
     getCursorDirection: function (myX, myY) {
         //var yDifference = Interface.mouseX - (myY + Game.canvas_top);
@@ -52,6 +52,15 @@ Interface = {
 
         toggleSpellBook: function () {
             $('#spellBook').toggleClass('spellBookAnimation');
+        },
+
+        isSpellValid: function (name) {
+            if(name === '') return false;
+            for(var i = 0; i < this.spellList.length; i++) {
+                if(this.spellList[i] === name && this.currentSpell !== i)
+                    return false;
+            }
+            return true;
         },
 
         previousPage: function () {
@@ -116,9 +125,13 @@ Interface = {
             this.spellPage = $('#pageText');
             var newName = this.spellPage.children("#name").val();
             var newContents = this.spellPage.children("#contents").val();
-            Library.updatePlayerSpell(currentSpell, newName, newContents);
-            console.log("updatingSpell " + currentSpell);
-            this.spellList[this.currentSpell] = newName;
+            if(this.isSpellValid(newName)) {
+                Library.updatePlayerSpell(currentSpell, newName, newContents);
+                console.log("updatingSpell " + currentSpell);
+                this.spellList[this.currentSpell] = newName;
+            } else {
+                console.log('Spell: ' + newName + ' is not chill.');
+            }
         },
 
 	init: function (viewport_width, viewport_height) {

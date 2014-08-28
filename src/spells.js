@@ -57,18 +57,25 @@ Library = (function () {
 
     my.updatePlayerSpell = function (name, newName, newContents) {
         var spell = my.getSpell(name);
-        spell.name = newName;
-        spell.contents = newContents;
-        spellMapping[newName] = spell;
-        delete spellMapping[name];
-        console.log("Updating player spell " + name);
+        console.log("Updating player spell " + newName);
+        if(spell === undefined) {
+            spell = playerSpells.createSpell(name, contents);
+            spellMapping[newName] = spell;
+        } else {
+            spell.name = newName;
+            spell.contents = newContents;
+            if(newName !== name) {
+                spellMapping[newName] = spell;
+                delete spellMapping[name];
+            }
+        }
     }
 
     my.getSpell = function (name) {
         spell = spellMapping[name];
         if(spell === undefined) {
             console.log(name + " is not a valid spell");
-            return 0;
+            return undefined;
         }
         return spell;
     }
