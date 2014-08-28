@@ -55,6 +55,15 @@ Library = (function () {
         console.log("Inserting player spell " + name);
     }
 
+    my.updatePlayerSpell = function (name, newName, newContents) {
+        var spell = my.getSpell(name);
+        spell.name = newName;
+        spell.contents = newContents;
+        spellMapping[newName] = spell;
+        delete spellMapping[name];
+        console.log("Updating player spell " + name);
+    }
+
     my.getSpell = function (name) {
         spell = spellMapping[name];
         if(spell === undefined) {
@@ -65,11 +74,19 @@ Library = (function () {
     }
 
     my.getLibrarySpells = function () {
-        return librarySpells.spells;
+        nameList = [];
+        for(var i = 0; i < librarySpells.spells.length; i++) {
+            nameList.push(librarySpells.spells[i].name);
+        }
+        return nameList;
     }
         
     my.getPlayerSpells = function () {
-        return playerSpells.spells;
+        nameList = [];
+        for(var i = 0; i < playerSpells.spells.length; i++) {
+            nameList.push(playerSpells.spells[i].name);
+        }
+        return nameList;
     }
     
     /* insert_library_spell - puts a function 

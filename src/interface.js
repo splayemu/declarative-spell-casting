@@ -4,6 +4,8 @@ Interface = {
     mouseY: 0,
     paper: undefined,
     focus: false,
+    playerSpells: undefined,
+    librarySpells: undefined,
 	
     mousePos: function (e) {
         Interface.mouseX = e.pageX - 2;
@@ -38,55 +40,87 @@ Interface = {
     ui: {
         // library spells first tab and x spells
         // player spells second tab and y spells
-        spellPage: undefined,
-        curentSpell: null,
+        pageText: undefined,
+        curentSpell: undefined,
+        spellList: [],
         listHtml: '<ul id="spellList"></ul>',
         spellHtml: '<input id="name" type="text"></input><input id="contents" type="text"></input>',
+
         getCurrentSpell: function () {
-            return this.currentSpell;
+            return Library.getSpell(this.spellList[this.currentSpell]);
         },
+
         toggleSpellBook: function () {
-            this.spellPage.toggleClass('spellBookAnimation');
+            $('#spellBook').toggleClass('spellBookAnimation');
         },
+
+        previousPage: function () {
+            if(this.currentSpell === 0) {
+                this.displayList();
+            } else {
+                this.currentSpell -= 1;
+                this.displaySpell(this.currentSpell);
+            }
+        },
+                 
+        nextPage: function () {
+            if(this.currentSpell === undefined) {
+                this.currentSpell = -1;
+            }
+            if(this.currentSpell === this.spellList.length - 1) {
+                this.spellList.push('blank');
+            }
+            this.currentSpell += 1;
+            this.displaySpell(this.currentSpell);
+        },
+
         // list format versus spell format
         displayList: function () {
-            this.currentSpell = null;
-            librarySpells = Library.getLibrarySpells();
-            playerSpells = Library.getPlayerSpells();
-            var numSpells = playerSpells.length;
+            this.currentSpell = undefined;
+            var numSpells = this.spellList.length;
             // going to need a list needs pagination
             var numSpellsShown = numSpells / 15; // px
-            $('#spellPage').html(this.listHtml);
-            for (spell in playerSpells) {
-//                $('#spellList').append(
-                console.log('adding ' + playerSpells[spell].name);
+            $('#pageText').html(this.listHtml);
+            for(var i = 0; i < this.spellList.length; i++) {
+                console.log('adding ' + this.spellList[i]);
                 $('#spellList').append(
-                    $('<li>').html(playerSpells[spell].name)
+                    $('<li>').html(this.spellList[i])
+                             .on('click', { index: i },
+                                 function(event) {
+                                     Interface.ui.displaySpell(event.data.index); 
+                                 })
                 );
             }
 
 
         },
-        displaySpell: function (name) {
-            var spell = Library.getSpell(name);
+
+        displaySpell: function (index) {
+            var spell = Library.getSpell(this.spellList[index]);
             if(spell === 0) {
                 return false;
             }
             
-            this.currentSpell = spell;
-            console.log(this.currentSpell);
-            this.spellPage = $('#spellPage');
+            this.currentSpell = index;
+            console.log(this.spellList[index] + ' ' + this.currentSpell);
+            this.pageText = $('#pageText');
+            this.pageText.html(this.spellHtml);
 
-            this.spellPage.children("#name").val(spell.name);
-            this.spellPage.children("#contents").val(spell.contents);
+            this.pageText.children("#name").val(spell.name);
+            this.pageText.children("#contents").val(spell.contents);
         },
+
         updateSpell: function () {
-            currentSpell = Interface.ui.getCurrentSpell();
+            var currentSpell = this.spellList[this.currentSpell];
             console.log("updatingSpell " + currentSpell);
-            this.spellPage = $('#spellPage');
-            currentSpell.name = this.spellPage.children("#name").val();
-            currentSpell.contents = this.spellPage.children("#contents").val();
+            this.spellPage = $('#pageText');
+            var newName = this.spellPage.children("#name").val();
+            var newContents = this.spellPage.children("#contents").val();
+            Library.updatePlayerSpell(currentSpell, newName, newContents);
+            console.log("updatingSpell " + currentSpell);
+            this.spellList[this.currentSpell] = newName;
         },
+
 	init: function (viewport_width, viewport_height) {
             // maximum/ minimum width and height of the ui
             var maxHeight = 1000;
@@ -106,30 +140,36 @@ Interface = {
             var x = viewport_width - interfaceWidth;
 
             // resize css elements
-            var spellPage = this.spellPage = $('#spellPage');
+            var spellPage = this.spellPage = $('#pageText');
+            var spellBook = $('#spellBook');
             
-            spellPage.css('height', interfaceHeight + 'px');
-            spellPage.css('width', interfaceWidth + 'px');
-            spellPage.css('left', x + 'px');
+            spellBook.css('height', interfaceHeight + 'px');
+            spellBook.css('width', interfaceWidth + 'px');
+            spellBook.css('left', x + 'px');
             // populate lists of spells
             Library.addPlayerSpell('fireball', 'test');
             Library.addPlayerSpell('iceball', 'test');
 
             spells = Library.getPlayerSpells();
 
-            for (each in spells) {
-                console.log('printing spell: ' + spells[each]);
-                Interface.ui.displaySpell(spells[each].name);
-            }
-            console.log(this.currentSpell);
+            //for (each in spells) {
+            //    console.log('printing spell: ' + spells[each]);
+            //    Interface.ui.displaySpell(spells[each].name);
+            //}
 
             this.spellPage.on("focusin", function () { Interface.focus = true });
             this.spellPage.on("focusout", function () { Interface.focus = false; Interface.ui.updateSpell() });
+
+            $('#next').on('click', function () { Interface.ui.nextPage() });
+            $('#prev').on('click', function () { Interface.ui.previousPage() });
             // create tabs of spells
             // create empty spell
             // create right and left buttons
             // pressing a button toggles the interface
             this.toggleSpellBook();
+
+            this.spellList = Library.getLibrarySpells();
+            this.spellList.push.apply(this.spellList, Library.getPlayerSpells());
             this.displayList();
         }
     },
@@ -144,7 +184,7 @@ Interface = {
         var num_tiles_width = Math.floor(viewport_width / tile_size);
         var num_tiles_height= Math.floor(viewport_height / tile_size);        
 
-        // start crafty
+        // stoart crafty
         var crafty_div = document.getElementById('cr-stage');
         var position = crafty_div.getBoundingClientRect();
         var x = position.left;

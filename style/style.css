@@ -9,7 +9,7 @@
         font-size: 12px;
     }
 
-    #spellPage {
+    #spellBook {
         position: absolute;
         left: 0px;
         top: 0px;
@@ -21,6 +21,11 @@
         animation-duration: 3s;
         animation-direction: alternate;
         animation-name: slidein;
+    }
+
+    #pageText {
+        height: 90%;
+        width: 100%;
     }
     #name {
         position: relative;
