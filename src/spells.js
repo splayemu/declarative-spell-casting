@@ -1,5 +1,16 @@
-/* spells.js - file that holds the library
+/*
+
+Things to do:
+ - Need a handler to scan and parse spells when they are updated
+ - Need some sort of parameter checking
+ - Need some sort of manacost calculator
+ - 
+
+
 */
+
+
+
 
 Library = (function () {
     var my = {};
@@ -7,10 +18,10 @@ Library = (function () {
     var librarySpells = {
         spells: [],
         spellPrototype: {
-            name: "undefined",
-            description: "undefined",
-            parameters: "undefined",
-            funct: "undefined",
+            name: undefined,
+            description: undefined,
+            parameters: undefined,
+            funct: undefined,
             toString: function () {
                 return this.name;
             }
@@ -22,6 +33,7 @@ Library = (function () {
             newSpell.funct = funct;
             newSpell.parameters = parameters;
             this.spells.push(newSpell);
+            //console.log('creating library spell with ' + newSpell.funct);
             return newSpell;
         },
     };
@@ -29,8 +41,9 @@ Library = (function () {
     var playerSpells = {
         spells: [],
         spellPrototype: {
-            name: "undefined",
-            contents: "undefined",
+            name: undefined,
+            contents: undefined,
+            ast: undefined,
             toString: function() {
                 return this.name;
             }
@@ -39,6 +52,7 @@ Library = (function () {
             var newSpell = Object.create(this.spellPrototype);
             newSpell.name = name;
             newSpell.contents = contents;
+            
             this.spells.push(newSpell);
             return newSpell;
         },
@@ -104,9 +118,9 @@ Library = (function () {
     var addLibrarySpell = function (name, description, params, funct) {
         
         // var spell_info = {'params':params, 'funct':funct};
-        var spell = librarySpells.createSpell(name, description, params, funct);
+        var spell = librarySpells.createSpell(name, description, funct, params);
         spellMapping[name] = spell;
-        console.log("Inserting library spell " + name);
+        console.log("Inserting library spell " + name + " with function " + spell.funct);
     }
 
 
@@ -117,11 +131,14 @@ Library = (function () {
         
     */
     my.activate_library_spell = function(hostspell, player_id, name, arguments) {
+        console.log('activate_library_spell: called with ' + name);
         spell = spellMapping[name];
-        if(spell == undefined) {
+        if(spell === undefined 
+            || !librarySpells.spellPrototype.isPrototypeOf(spell)) {
             console.log(name + " is not a valid library spell");
-            return 0;
+            return spell;
         }
+        console.log(spell);
         var spellFunct = spell.funct;
         var spellParameters = spell.parameters;
         //for(var i = 0; i < children.length; i++) {
@@ -134,6 +151,7 @@ Library = (function () {
         //	return -1;
         //}
         // calculate manacost
+        console.log(spellFunct);
         spellFunct(hostspell, arguments);
         return 1;
     };

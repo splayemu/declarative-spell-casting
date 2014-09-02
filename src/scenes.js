@@ -48,6 +48,14 @@ Crafty.scene("Main", function() {
                     console.log('toggling spellbook');
                     Interface.ui.toggleSpellBook();
                 }
+                if (this.isDown('C')) {
+                    console.log('casting fireball');
+                    var fireball = Library.getSpell('fireball');
+                    var toks = scan(fireball);
+                    var ast = parse(toks);
+                    Crafty.e("Spell")
+                        .spell(0, '1', ast, {});
+                }
         	if (this.isDown('SPACE')) {
                     var playerPos = Game.main_player.at();
                     Crafty.e('Projectile')

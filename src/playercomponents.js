@@ -1,8 +1,3 @@
-/*	Manabar - the values and methods useful for managing a manabar 
-
-	Considering changing this component to an interface manager
-
-*/
 Crafty.c("Manabar", {
 	init: function () {
 	},
@@ -94,22 +89,6 @@ Crafty.c('PlayerCharacter', {
     }
 });
 
-/*	PlayerManager - gives the values and methods useful for managing a player
-	
-	Values:
-		mana 			- Mana is used to keep track of the amount of spells a player has casted.
-							All spells decrement mana upon casting.
-							When mana reaches 0, all of the player's spells disappear.
-		maximum_mana	- the greatest amount of mana a player can have
-		mana_regen		- how much mana will regen per game tick
-		manabar			- the id of the player's coresponding manabar entity (shows the player how much mana he/she has)
-		active_spells 	- a dictionary holding all of the player's active spells
-		
-	Methods:
-		destroySpells - destroys all the spells
-		incrementMana
-		decrementMana		
-*/
 Crafty.c("PlayerManager", {
 	init: function() {
 		/* EnterFrame - happens every tick of the game. The game tick of a player should:

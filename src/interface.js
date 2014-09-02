@@ -64,7 +64,7 @@ Interface = {
         },
 
         previousPage: function () {
-            if(this.currentSpell === 0) {
+            if(this.currentSpell === 0 || this.currentSpell === undefined) {
                 this.displayList();
             } else {
                 this.currentSpell -= 1;
@@ -138,29 +138,31 @@ Interface = {
             // maximum/ minimum width and height of the ui
             var maxHeight = 1000;
             var maxWidth = 600;
-            var minHeight = 600;
-            var minWidth = 400;
+            var minHeight = 400;
+            var minWidth = 300;
             // calculate the width and height min < % < max
             var interfaceWidth = viewport_width / 4;
             var interfaceHeight = viewport_height / 2;
        
-            var interfaceWidth = interfaceWidth > maxWidth ? maxWidth : interfaceWidth
-            var interfaceHeight = interfaceHeight > maxHeight ? maxHeight : interfaceHeight
+            this.interfaceWidth = interfaceWidth > maxWidth ? minWidth : interfaceWidth
+            this.interfaceHeight = interfaceHeight > maxHeight ? minHeight : interfaceHeight
+            this.interfaceWidth = interfaceWidth < minWidth ? minWidth : interfaceWidth
+            this.interfaceHeight = interfaceHeight < minHeight ? minHeight : interfaceHeight
 
-            console.log("interfaceWidth: " + interfaceWidth);
-            console.log("interfaceHeight: " + interfaceHeight);
+            console.log("interfaceWidth: " + this.interfaceWidth);
+            console.log("interfaceHeight: " + this.interfaceHeight);
              // calculate position of interface
-            var x = viewport_width - interfaceWidth;
+            var x = viewport_width - this.interfaceWidth;
 
             // resize css elements
             var spellPage = this.spellPage = $('#pageText');
             var spellBook = $('#spellBook');
             
-            spellBook.css('height', interfaceHeight + 'px');
-            spellBook.css('width', interfaceWidth + 'px');
-            spellBook.css('left', x + 'px');
-            // populate lists of spells
-            Library.addPlayerSpell('fireball', 'test');
+            spellBook.css('height', this.interfaceHeight + 'px');
+            spellBook.css('width', this.interfaceWidth + 'px');
+            spellBook.css('left', x  + 'px');
+            // populate lists of spe lls
+            Library.addPlayerSpell('fireball', 'shape 5');
             Library.addPlayerSpell('iceball', 'test');
 
             spells = Library.getPlayerSpells();
