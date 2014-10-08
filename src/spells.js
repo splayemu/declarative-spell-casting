@@ -17,23 +17,38 @@ Library = (function () {
     
     var librarySpells = {
         spells: [],
-        spellPrototype: {
-            name: undefined,
-            description: undefined,
-            parameters: undefined,
-            funct: undefined,
-            toString: function () {
-                return this.name;
+        spellPropertiesPrototype: {
+            name: {
+                value: null,
+                writable: false,
+            },
+            description: {
+                value: null,
+                writable: false,
+            },
+            parameters: {
+                value: null,
+                writable: false,
+            },
+            funct: {
+                value: null,
+                writable: false,
+            },
+            toString: {
+                value: function () {
+                    return this.name;
+                }
             }
         },
         createSpell: function (name, description, funct, parameters) {
-            var newSpell = Object.create(this.spellPrototype);
-            newSpell.name = name;
-            newSpell.description = description;
-            newSpell.funct = funct;
-            newSpell.parameters = parameters;
+            var spellProperties = this.spellPropertiesPrototype;
+            spellProperties.name.value = name;
+            spellProperties.description.value = description;
+            spellProperties.funct.value = funct;
+            spellProperties.parameters.value = parameters;
+            var newSpell = Object.create({}, spellProperties);
             this.spells.push(newSpell);
-            //console.log('creating library spell with ' + newSpell.funct);
+            //console.log(spellProperties);
             return newSpell;
         },
     };
@@ -43,16 +58,36 @@ Library = (function () {
         spellPrototype: {
             name: undefined,
             contents: undefined,
-            ast: undefined,
+            params: {},
+            ast_: undefined,
+            contents_: undefined,
             toString: function() {
                 return this.name;
             }
         },
+        spellPropertiesPrototype: {
+            ast: {
+                get: function () {
+                    return this.ast_.copy()
+                },
+            },
+            contents: {
+                get: function () {
+                    return this.contents_;
+                },
+                set: function (newContents) {
+                    console.log('contents: setting to ' + newContents);
+                    var toks = scan(newContents);
+                    this.contents_ = newContents;
+                    this.ast_ = parse(toks);
+                },
+            },
+        },
         createSpell: function (name, contents) {
-            var newSpell = Object.create(this.spellPrototype);
+            console.log('Creating spell ' + name + ' with contents ' + contents);
+            var newSpell = Object.create(this.spellPrototype, this.spellPropertiesPrototype);
             newSpell.name = name;
             newSpell.contents = contents;
-            
             this.spells.push(newSpell);
             return newSpell;
         },
@@ -66,16 +101,15 @@ Library = (function () {
     my.addPlayerSpell = function (name, contents) {
         var spell = playerSpells.createSpell(name, contents);
         spellMapping[name] = spell;
-        console.log("Inserting player spell " + name);
-    }
+    } 
 
     my.updatePlayerSpell = function (name, newName, newContents) {
         var spell = my.getSpell(name);
-        console.log("Updating player spell " + newName);
         if(spell === undefined) {
             spell = playerSpells.createSpell(name, contents);
             spellMapping[newName] = spell;
         } else {
+            console.log("Updating player spell " + newName + ' with contents.');
             spell.name = newName;
             spell.contents = newContents;
             if(newName !== name) {
@@ -121,6 +155,7 @@ Library = (function () {
         var spell = librarySpells.createSpell(name, description, funct, params);
         spellMapping[name] = spell;
         console.log("Inserting library spell " + name + " with function " + spell.funct);
+        //console.log(spell);
     }
 
 
@@ -130,13 +165,13 @@ Library = (function () {
             argument	- a list of arguments to pass to the spell
         
     */
-    my.activate_library_spell = function(hostspell, player_id, name, arguments) {
+    my.activate_library_spell = function(hostspell, name, arguments) {
         console.log('activate_library_spell: called with ' + name);
         spell = spellMapping[name];
         if(spell === undefined 
-            || !librarySpells.spellPrototype.isPrototypeOf(spell)) {
+            || playerSpells.spellPrototype.isPrototypeOf(spell)) {
             console.log(name + " is not a valid library spell");
-            return spell;
+            return false;
         }
         console.log(spell);
         var spellFunct = spell.funct;
@@ -153,7 +188,7 @@ Library = (function () {
         // calculate manacost
         console.log(spellFunct);
         spellFunct(hostspell, arguments);
-        return 1;
+        return true;
     };
 
     /*	shape - creates a movable spell of a certain size and color
@@ -165,12 +200,12 @@ Library = (function () {
         
         Output: returns the entity created
     */
-    // big issue here is if size is not a number (and instead is a syn_node), it gets confused
     var shape = function (spell, arguments) {
         if(arguments.length != 1) {
             console.log("Error: shape must only have 1 arguments. Has " + arguments.length + " argument(s) instead.");
             return;
         }
+        console.log("Library Shape called.");
         var size = arguments[0];
         spell.shape(size);
     }
@@ -191,7 +226,9 @@ Library = (function () {
         }
         var direction = arguments[0];
         var amount = arguments[1];
-        spell.accelerate(direction, amount);
+        console.log(spell);
+        console.log('accelerate called: ' + direction + ' ' + amount);
+        spell.addVelocityTowards(direction, amount);
     }
     /*	cond - chooses between the second and third arguments based on the boolean first argument
         Inputs:

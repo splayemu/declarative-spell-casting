@@ -51,27 +51,27 @@ Crafty.scene("Main", function() {
                 if (this.isDown('C')) {
                     console.log('casting fireball');
                     var fireball = Library.getSpell('fireball');
-                    var toks = scan(fireball);
-                    var ast = parse(toks);
-                    Crafty.e("Spell")
-                        .spell(0, '1', ast, {});
+                    console.log(fireball);
+                    console.log(fireball.ast);
+                    var spell = Crafty.e("Spell")
+                        .spell(this.id, '1', fireball.ast, {});
                 }
-        	if (this.isDown('SPACE')) {
+                /*if (this.isDown('SPACE')) {
                     var playerPos = Game.main_player.at();
                     Crafty.e('Projectile')
                         .at(playerPos.x, playerPos.y)
                         .projectile(5, mousepos.getDirection(playerPos.x, playerPos.y), 1);
         
-                    //.projectile(5, Interface.getCursorDirection(Game.main_player.x + Crafty.viewport.x, Game.main_player.y + Crafty.viewport.y), 1);
-			    //console.log("viewportX: " + Crafty.viewport.x + " viewportY: " + Crafty.viewport.y);
-				//console.log("Player x: " + (Game.main_player.x + Crafty.viewport.x)
-				//          + " y: " + (Game.main_player.y + Crafty.viewport.y));
-				//var mouse = Interface.getMousePos();
-				//console.log("MouseX: " + mouse.x + " MouseY: " + mouse.y);
-  				//Interface.drawLineToCursor(Game.main_player.x, Game.main_player.y);
-				//this.trigger("Cast", [spell_name, []]);
-			}
-           }
+                        //.projectile(5, Interface.getCursorDirection(Game.main_player.x + Crafty.viewport.x, Game.main_player.y + Crafty.viewport.y), 1);
+                    //console.log("viewportX: " + Crafty.viewport.x + " viewportY: " + Crafty.viewport.y);
+                    //console.log("Player x: " + (Game.main_player.x + Crafty.viewport.x)
+                    //          + " y: " + (Game.main_player.y + Crafty.viewport.y));
+                    //var mouse = Interface.getMousePos();
+                    //console.log("MouseX: " + mouse.x + " MouseY: " + mouse.y);
+                    //Interface.drawLineToCursor(Game.main_player.x, Game.main_player.y);
+                    //this.trigger("Cast", [spell_name, []]);
+                }*/
+            }
         });
 
 
@@ -83,16 +83,16 @@ Crafty.scene("Main", function() {
 	});
 
 	Crafty.addEvent(this, "mousedown", function(e) {
-            if(e.buttons === 2) {
+        if(e.buttons === 2) {
 	        var mousePos = mousepos.at();
 	        console.log("Clicked. with mouse position x:" + mousePos.x + " and y: " + mousePos.y);
 	        Game.endpoint.moveTo(mousePos.x, mousePos.y);
-	        Game.main_player.moveTowards(mousePos.x, mousePos.y);
-            }
+	        Game.main_player.moveTowards(mousePos.x, mousePos.y, 1);
+        }
 	});
 	
 		
-    Crafty.viewport.follow(Game.main_player, 0, 0);
+    //Crafty.viewport.follow(Game.main_player, 0, 0);
 });
 
 // Loading scene

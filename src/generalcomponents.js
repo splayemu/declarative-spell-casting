@@ -80,6 +80,126 @@ Crafty.c("Explosion", {
     },
 });
 
+Crafty.c('Motion', {
+    init: function() {
+        this.requires('Actor');
+         
+		this.distance_left_x = 0;
+		this.distance_left_y = 0;
+        this.vX = 0;
+        this.vY = 0;
+        this.aX = 0;
+        this.aY = 0;
+        this.target_direction = 0;
+		this.direction = 0;
+        this.friction_coef = 0.0;
+        
+		this.bind('EnterFrame', function () {
+            if (this.y <= 0 || this.y >= (Game.playable_height - 10))
+                this.destroy();
+
+            if (this.x <= 0 || this.x >= (Game.playable_width - 10))
+                this.destroy();
+            
+            this.vX += this.aX;
+            this.vY += this.aY;
+            
+             // adding friction
+            this.vX += this.vX * -1 * this.friction_coef;           
+            this.vY += this.vY * -1 * this.friction_coef;    
+            
+            //console.log("vX: " + this.vX + " / " + (1.0 * fps) + " = " + (this.vX / (1.0 * fps)));
+            
+            //this.x += this.vX / (1.0 * fps);
+            //this.y += this.vY / (1.0 * fps);
+            
+            this.x += this.vX;
+            this.y += this.vY;
+            //}
+
+		});
+    },
+    
+    // sets acceleration
+	accelerateTowards: function (x, y, amount) {
+
+		var pos = this.at();
+		this.distance_left_x = Math.abs(x - pos.x) * Game.map_grid.tile.width;
+		this.distance_left_y = Math.abs(y - pos.y) * Game.map_grid.tile.height;
+		//this.distance_left = Math.sqrt(Math.pow(pos.x - x, 2) + Math.pow(pos.y - y, 2));
+		//console.log("Distance to walk: " + this.distance_left);
+        this.direction = this.getDirection(x, y);
+		//console.log("direction: " + this.direction);
+        this.aX = -Math.sin(this.direction) * amount;
+        this.aY = -Math.cos(this.direction) * amount;
+        
+        //console.log("aX: " + this.aX + " aY: " + this.aY);
+
+    },
+    
+    
+    // sets velocity
+  	moveTowards: function (x, y, speed) {
+		var pos = this.at();
+		this.distance_left_x = Math.abs(x - pos.x) * Game.map_grid.tile.width;
+		this.distance_left_y = Math.abs(y - pos.y) * Game.map_grid.tile.height;
+		//this.distance_left = Math.sqrt(Math.pow(pos.x - x, 2) + Math.pow(pos.y - y, 2));
+		//console.log("Distance to walk: " + this.distance_left);
+        this.target_direction = this.getDirection(x, y);
+		//console.log("direction: " + this.direction);
+		this.vX = -Math.sin(this.target_direction) * speed;
+		this.vY = -Math.cos(this.target_direction) * speed;
+		//console.log("vX: " + this.vX + ", vY: " + this.vY);
+		//console.log("distance_left_x: " + this.distance_left_x + ", frames to complete: " + this.distance_left_x / this.vX);
+		//console.log("distance_left_y: " + this.distance_left_y + ", frames to complete: " + this.distance_left_y / this.vY);
+    },
+    
+    addVelocityTowards: function (direction, speed) {
+        this.target_direction = direction;
+		this.vX += -Math.sin(direction) * speed;
+		this.vY += -Math.cos(direction) * speed;
+    },
+    
+    calculateVelocityDirection: function () {
+        return Math.atan2(this.vY, this.vX) * 180 / Math.PI;
+    },
+	
+    calculateAccelerationDirection: function () {
+        return Math.atan2(this.aY, this.aX) * 180 / Math.PI;    
+    },
+    
+    calculateVelocity: function () {
+        return Math.sqrt(Math.pow(this.vX, 2) + Math.pow(this.vY, 2));
+    
+    },
+    
+    calculateAcceleration: function () {
+        return Math.sqrt(Math.pow(this.aX, 2) + Math.pow(this.aY, 2));
+    
+    },  
+    
+    stopOnSolids: function() {
+        this.onHit('Solid', this.stopMovement);
+        return this;
+    },
+    
+    // Stops the movement
+    stopMovement: function() {
+		this.direction = 10; // special direction to signify stopped
+        if (this.vX || this.vY) {
+            this.x -= this.vX;
+            this.y -= this.vY;
+			this.vX = 0;
+			this.vY = 0;
+            this.aX = 0;
+            this.aY = 0;
+            this.distance_left_x = 0;
+            this.distance_left_y = 0;
+        }
+    }  
+});
+
+/*
 Crafty.c("Projectile", {
     init: function() {
         this.requires('Actor, Collision, spr_spell, SpriteAnimation')
@@ -117,130 +237,7 @@ Crafty.c("Projectile", {
         Crafty.e("Explosion").at(pos.x, pos.y);
         this.destroy();
     },
-});
+}); */
 
-// This is the player-controlled character
-Crafty.c('PlayerCharacter', {
-    init: function() {
-        this.requires('Actor, Collision, spr_player, SpriteAnimation, ')
-            .stopOnSolids()
-            .stopAtEndpoint()
-            .reel('PlayerMovingUp',    8, [[4, 8], [5,8]])
-            .reel('PlayerMovingRight', 8, [[2, 8], [3,8]])
-            .reel('PlayerMovingDown',  8, [[0, 8], [1,8]])
-            .reel('PlayerMovingLeft',  8, [[6, 8], [7,8]]);
-    
-        this.targetX = this.at().x;
-        this.targetY = this.at().y;
-        this.distance_left_x = 0;
-        this.distance_left_y = 0;
-        this.dx = 0;
-        this.dy = 0;
-        this.speed = 1;
-        this.direction = 0;
-        //this.turn_speed = 1;
 
-        this.bind('EnterFrame', function () {
 
-        
-            var dir = Math.abs(this.direction);
-            if (dir < Math.PI / 4) {
-                if (! this.isPlaying('PlayerMovingUp'))
-                    this.animate('PlayerMovingUp', -1);            
-            }
-            else if (dir < 3 * Math.PI / 4) {
-                if (this.direction < 0) {
-                    if (! this.isPlaying('PlayerMovingRight')) 
-                        this.animate('PlayerMovingRight', -1);                
-                }
-                else {
-                    if (! this.isPlaying('PlayerMovingLeft')) 
-                        this.animate('PlayerMovingLeft', -1);                        
-                }
-            }
-            else if (dir < Math.PI) {
-                if (! this.isPlaying('PlayerMovingDown')) 
-                    this.animate('PlayerMovingDown', -1);
-            }
-            else { // dir is set to 10 to signify stopped
-                this.pauseAnimation();
-            }
-        
-            this.distance_left_x -= Math.abs(this.dx);
-            this.distance_left_y -= Math.abs(this.dy);
-            //if(this.dx != 0 && this.dy != 0) {
-            //    console.log("distance_left_x: " + this.distance_left_x + ", frames to complete: " + this.distance_left_x / this.dx);
-            //    console.log("distance_left_y: " + this.distance_left_y + ", frames to complete: " + this.distance_left_y / this.dy);
-            //}
-            if((this.dx != 0 && this.dy != 0) && 
-               (this.distance_left_x <= 0 && this.distance_left_y <= 0)) {
-                
-                this.at(this.targetX, this.targetY);
-                this.pauseAnimation();
-                this.stopMovement();
-            } else {
-                this.x += this.dx;
-                this.y += this.dy;
-            
-            }
-            
-        });
-    },
-    
-    
-    
-    moveTowards: function (x, y) {
-        this.speed = 3;
-        this.targetX = x;
-        this.targetY = y;
-
-        var pos = this.at();
-        this.distance_left_x = Math.abs(x - pos.x) * Game.map_grid.tile.width;
-        this.distance_left_y = Math.abs(y - pos.y) * Game.map_grid.tile.height;
-        //this.distance_left = Math.sqrt(Math.pow(pos.x - x, 2) + Math.pow(pos.y - y, 2));
-        //console.log("Distance to walk: " + this.distance_left);
-        this.direction = this.getDirection(x, y);
-        console.log("direction: " + this.direction);
-        this.dx = -Math.sin(this.direction) * this.speed;
-        this.dy = -Math.cos(this.direction) * this.speed;
-        console.log("_movement(x: " + this.dx + ", y: " + this.dy + ")");
-        console.log("distance_left_x: " + this.distance_left_x + ", frames to complete: " + this.distance_left_x / this.dx);
-        console.log("distance_left_y: " + this.distance_left_y + ", frames to complete: " + this.distance_left_y / this.dy);
-        
-        
-        //console.log("xDifference: " + xDifference + " yDifference: " + yDifference);
-        //console.log("hypDist: " + hypDist);
-        //console.log("Angle: " + Math.atan2(xDifference, yDifference) * (180 / Math.PI));
-
-    },
-    
-    
-    // Registers a stop-movement function to be called when
-    //  this entity hits an entity with the "Solid" component
-    stopOnSolids: function() {
-        this.onHit('Solid', this.stopMovement);
-    
-        return this;
-    },
-    // Registers a stop-movement function to be called when
-    //  this entity hits an entity with the "Solid" component
-    stopAtEndpoint: function() {
-        //this.onHit('Endpoint', this.stopMovement);
-    
-        return this;
-    },
-    
-    // Stops the movement
-    stopMovement: function() {
-        this.speed = 0;
-        this.direction = 10; // special direction to signify stopped
-        if (this._movement) {
-            this.x -= this.dx;
-            this.y -= this.dy;
-            this.dx = 0;
-            this.dy = 0;
-            this.targetX = this.at().x;
-            this.targetY = this.at().y;
-        }
-    }
-});

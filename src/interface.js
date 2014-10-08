@@ -113,6 +113,9 @@ Interface = {
             this.currentSpell = index;
             console.log(this.spellList[index] + ' ' + this.currentSpell);
             this.pageText = $('#pageText');
+            console.log(spell.name);
+            console.log(spell.contents);
+            
             this.pageText.html(this.spellHtml);
 
             this.pageText.children("#name").val(spell.name);
@@ -152,18 +155,20 @@ Interface = {
             console.log("interfaceWidth: " + this.interfaceWidth);
             console.log("interfaceHeight: " + this.interfaceHeight);
              // calculate position of interface
-            var x = viewport_width - this.interfaceWidth;
-
+            var left = viewport_width - this.interfaceWidth;
+            var top = viewport_height - this.interfaceHeight;
+            
             // resize css elements
             var spellPage = this.spellPage = $('#pageText');
             var spellBook = $('#spellBook');
             
             spellBook.css('height', this.interfaceHeight + 'px');
             spellBook.css('width', this.interfaceWidth + 'px');
-            spellBook.css('left', x  + 'px');
+            spellBook.css('left', left  + 'px');
+            spellBook.css('top', top  + 'px');
             // populate lists of spe lls
-            Library.addPlayerSpell('fireball', 'shape 5');
-            Library.addPlayerSpell('iceball', 'test');
+            Library.addPlayerSpell('fireball', 'shape 5, iceball');
+            Library.addPlayerSpell('iceball', 'accelerate 0 1, iceball');
 
             spells = Library.getPlayerSpells();
 

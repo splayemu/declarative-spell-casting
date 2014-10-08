@@ -13,53 +13,27 @@
 */
 Crafty.c("PhysicalSpell", {
     init: function() {
-        this.requires('2D');
+        this.requires('spr_spell');
+        this.requires('Motion');
         //this.requires('Collision');
-        this.requires('Color');
-        this.bind('EnterFrame', function () {
+        //.requires('Color');
+        /*this.bind('EnterFrame', function () {
             //hit floor or roof
             if (this.y <= 0 || this.y >= (Game.playable_height - 10))
                 this.destroy();
 
             if (this.x <= 0 || this.x >= (Game.playable_width - 10))
                 this.destroy();
-
-            // check for colisions with colidable objects that aren't you
-        /*    var collisions = this.hit("Collidable");
-            if (collisions != false) {
-                for(each_collision in collisions) {
-                    //if(each_collision["obj"] != Crafty(this.parent_id)) {
-                        console.log("Collided with " + each_collision + " and " + each_collision.obj);
-                        //this.destroy();                
-                    //}
-                }
-            } */
                 
             this.x += this.dX;
             this.y += this.dY;
-        });
+        });*/
     },
     
-    /*    physicalspell - the constructor for the physicalspell component
-    */
-    physicalspell: function(size, xStartingPos, yStartingPos, color) {
-        this.attr({ x: xStartingPos, y: yStartingPos, w: size, h: size, dX: 0, dY: 0 })
-            .color(color);
+    physicalspell: function(size, xStartingPos, yStartingPos) {
+        this.at(xStartingPos, yStartingPos);
 
         return this;
-    },
-    /*    accelerate - adds an acceleration to a physical spell
-    
-        Inputs:
-            direction    - the direction in degress of the acceleration
-            amount        - the amount of acceleration to add
-    */
-    accelerate: function(direction, amount) {
-            direction = direction * Math.PI / 180;
-            var additionaldX = Math.sin(direction) * amount;
-            var additionaldY = Math.cos(direction) * amount;
-            console.log("Accelerating dX: " + additionaldX + " dY: " + additionaldY);
-            this.attr({ dX: this.dX + additionaldX, dY: this.dY + additionaldY });
     },
     /*    selfDestruct - calls the entities destroy method
     */
@@ -100,23 +74,26 @@ Crafty.c("Spell", {
         this.bind('EnterFrame', function () {
             // update the cursor variable
             // broken
-            this.variables['cursor'] = 0; //Interface.getCursorDirection(this._x, this._y);
-            //console.log("Parent_id = " + this.parent_id);
-            if(this.spell_ast.get_children().length != 0) {
-                this.realTimeSpellInterpreter(this.spell_ast.shift_child());
-            }                
+            if(this.counter % 5 == 0) {
+                this.variables['cursor'] = 0; //Interface.getCursorDirection(this._x, this._y);
+                //console.log("Parent_id = " + this.parent_id);
+                if(this.spell_ast.get_children().length != 0) {
+                    this.realTimeSpellInterpreter(this.spell_ast.shift_child());
+                }
+            }
+            this.counter += 1;
         });
     },
     
     // constructor for spell
     spell: function(player_id, spell_name, spell_ast, parameters) {
-        console.log('lel');
         this.name = spell_name;
         this.parent_id = player_id;
         this.spell_ast = spell_ast;
         this.variables = parameters;
         this.variables["true"] = true;
-        this.variables["false"] = false;            
+        this.variables["false"] = false;  
+        this.counter = 0;        
         console.log(this.name + " initialized with player_id: " + this.parent_id);
         return this;
     },
@@ -135,9 +112,9 @@ Crafty.c("Spell", {
         //console.log("player_id: " + player_id);
         console.log("size: " + size);
 
-        var parent = Crafty(this.parent_id);
-        
-        this.addComponent("Actor, PhysicalSpell").physicalspell(size, parent._x, parent._y, 'rgb(255,10,10)');
+        var parent = Game.main_player;
+        var parentLoc = parent.at();
+        this.addComponent("Actor, PhysicalSpell").physicalspell(size, parentLoc.x, parentLoc.y);
         //this.addComponent("Projectile");
     },
     
@@ -166,9 +143,9 @@ Crafty.c("Spell", {
     */
     realTimeSpellInterpreter: function(spell_root) {    
         var children = spell_root.get_children();
-        //for(var i = 0; i < children.length; i++) {
-        //    console.log("children[" + i + "]:" + children[i].get_lex_info());
-        //}
+        /*for(var i = 0; i < children.length; i++) {
+            console.log("children[" + i + "]:" + children[i].get_lex_info());
+        }*/
         var spell_name = children[0].get_lex_info();
         var arguments = children.slice(1);
         // look at the arguments of the spell and call the evaluateExpression on any operator
@@ -196,13 +173,13 @@ Crafty.c("Spell", {
             }
         }
         //var parameters = [this].concat(arguments);
-        var spell_success = Library.activate_library_spell(this, this.parent_id, spell_name, arguments);
+        var spell_success = Library.activate_library_spell(this, spell_name, arguments);
         if(!spell_success) {
             console.log("Trying the player spell library");
             this.activatePlayerSpellSpell(spell_name, arguments);
         }
         //console.log("Player_id: " + this.parent_id);
-        Crafty(this.parent_id).decrementMana(1);
+        //Crafty(this.parent_id).decrementMana(1);
     },
     /*    pushSpellAst - pushes a spell with arguments to be executed 
         Inputs: spell_root    - the root of the spell to be added to be executed
@@ -224,19 +201,18 @@ Crafty.c("Spell", {
     */
     activatePlayerSpellSpell: function(name, spell_arguments) {
         console.log("Trying to cast " + name);
-        var spell_info = Crafty(this.parent_id).player_spells[name];
+        var spell_info = Library.getSpell(name);
         if(spell_info === undefined) {
             console.log(name + " is not a spell");
             return;
         }
-        var params = {};
-        var params_list = spell_info['params'].split(" ");
+        var params = spell_info.params;
         // verify arguments == params
-        for(index in params_list) {
-            console.log("Adding argument value: " + spell_arguments[index] + " to parameter: " + params_list[index]);
-            this.variables[params_list[index]] = spell_arguments[index];
+        for(key in params) {
+            console.log("Adding argument value: " + spell_arguments[key] + " to parameter: " + params[key]);
+            this.variables[params[key]] = spell_arguments[key];
         }
-        var spell_root = spell_info['funct'].copy();
+        var spell_root = spell_info.ast_.copy();
         console.log("Adding " + name + "'s root " + spell_root);
         var spell_children = spell_root.get_children();
         this.spell_ast.unshift_children(spell_children);

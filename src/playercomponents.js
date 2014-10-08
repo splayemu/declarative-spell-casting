@@ -40,36 +40,96 @@ Crafty.c("Manabar", {
 // This is the player-controlled character
 Crafty.c('PlayerCharacter', {
     init: function() {
-        this.requires('Actor, Fourway, Collision, spr_player, SpriteAnimation')
-            .fourway(4)
+        this.requires('Actor, Collision, spr_player, SpriteAnimation, ')
             .stopOnSolids()
-            // These next lines define our four animations
-            //  each call to .animate specifies:
-            //  - the name of the animation
-            //  - the x and y coordinates within the sprite
-            //     map at which the animation set begins
-            //  - the number of animation frames *in addition to* the first one
+            .stopAtEndpoint()
             .reel('PlayerMovingUp',    8, [[4, 8], [5,8]])
             .reel('PlayerMovingRight', 8, [[2, 8], [3,8]])
             .reel('PlayerMovingDown',  8, [[0, 8], [1,8]])
             .reel('PlayerMovingLeft',  8, [[6, 8], [7,8]]);
     
-        // Watch for a change of direction and switch animations accordingly
-        var animation_speed = 8;
-        this.bind('NewDirection', function(data) {
-            if (data.x > 0) {
-                this.animate('PlayerMovingRight', -1);
-            } else if (data.x < 0) {
-                this.animate('PlayerMovingLeft', -1);
-            } else if (data.y > 0) {
-                this.animate('PlayerMovingDown', -1);
-            } else if (data.y < 0) {
-                this.animate('PlayerMovingUp', -1);
-            } else {
+        this.targetX = this.at().x;
+        this.targetY = this.at().y;
+        this.distance_left_x = 0;
+        this.distance_left_y = 0;
+        this.dx = 0;
+        this.dy = 0;
+        this.speed = 1;
+        this.direction = 0;
+        //this.turn_speed = 1;
+
+        this.bind('EnterFrame', function () {
+
+        
+            var dir = Math.abs(this.direction);
+            if (dir < Math.PI / 4) {
+                if (! this.isPlaying('PlayerMovingUp'))
+                    this.animate('PlayerMovingUp', -1);            
+            }
+            else if (dir < 3 * Math.PI / 4) {
+                if (this.direction < 0) {
+                    if (! this.isPlaying('PlayerMovingRight')) 
+                        this.animate('PlayerMovingRight', -1);                
+                }
+                else {
+                    if (! this.isPlaying('PlayerMovingLeft')) 
+                        this.animate('PlayerMovingLeft', -1);                        
+                }
+            }
+            else if (dir < Math.PI) {
+                if (! this.isPlaying('PlayerMovingDown')) 
+                    this.animate('PlayerMovingDown', -1);
+            }
+            else { // dir is set to 10 to signify stopped
                 this.pauseAnimation();
             }
+        
+            this.distance_left_x -= Math.abs(this.dx);
+            this.distance_left_y -= Math.abs(this.dy);
+            //if(this.dx != 0 && this.dy != 0) {
+            //    console.log("distance_left_x: " + this.distance_left_x + ", frames to complete: " + this.distance_left_x / this.dx);
+            //    console.log("distance_left_y: " + this.distance_left_y + ", frames to complete: " + this.distance_left_y / this.dy);
+            //}
+            if((this.dx != 0 && this.dy != 0) && 
+               (this.distance_left_x <= 0 && this.distance_left_y <= 0)) {
+                
+                this.at(this.targetX, this.targetY);
+                this.pauseAnimation();
+                this.stopMovement();
+            } else {
+                this.x += this.dx;
+                this.y += this.dy;
+            
+            }
+            
         });
     },
+    
+    moveTowards: function (x, y) {
+        this.speed = 3;
+        this.targetX = x;
+        this.targetY = y;
+
+        var pos = this.at();
+        this.distance_left_x = Math.abs(x - pos.x) * Game.map_grid.tile.width;
+        this.distance_left_y = Math.abs(y - pos.y) * Game.map_grid.tile.height;
+        //this.distance_left = Math.sqrt(Math.pow(pos.x - x, 2) + Math.pow(pos.y - y, 2));
+        //console.log("Distance to walk: " + this.distance_left);
+        this.direction = this.getDirection(x, y);
+        console.log("direction: " + this.direction);
+        this.dx = -Math.sin(this.direction) * this.speed;
+        this.dy = -Math.cos(this.direction) * this.speed;
+        console.log("_movement(x: " + this.dx + ", y: " + this.dy + ")");
+        console.log("distance_left_x: " + this.distance_left_x + ", frames to complete: " + this.distance_left_x / this.dx);
+        console.log("distance_left_y: " + this.distance_left_y + ", frames to complete: " + this.distance_left_y / this.dy);
+        
+        
+        //console.log("xDifference: " + xDifference + " yDifference: " + yDifference);
+        //console.log("hypDist: " + hypDist);
+        //console.log("Angle: " + Math.atan2(xDifference, yDifference) * (180 / Math.PI));
+
+    },
+    
     
     // Registers a stop-movement function to be called when
     //  this entity hits an entity with the "Solid" component
@@ -78,24 +138,31 @@ Crafty.c('PlayerCharacter', {
     
         return this;
     },
+    // Registers a stop-movement function to be called when
+    //  this entity hits an entity with the "Solid" component
+    stopAtEndpoint: function() {
+        //this.onHit('Endpoint', this.stopMovement);
+    
+        return this;
+    },
     
     // Stops the movement
     stopMovement: function() {
-        this._speed = 0;
+        this.speed = 0;
+        this.direction = 10; // special direction to signify stopped
         if (this._movement) {
-            this.x -= this._movement.x;
-            this.y -= this._movement.y;
+            this.x -= this.dx;
+            this.y -= this.dy;
+            this.dx = 0;
+            this.dy = 0;
+            this.targetX = this.at().x;
+            this.targetY = this.at().y;
         }
     }
 });
 
 Crafty.c("PlayerManager", {
 	init: function() {
-		/* EnterFrame - happens every tick of the game. The game tick of a player should:
-			- Increment Mana
-			- If mana <= 0, 
-				destroy all spells
-		*/
 		this.bind('EnterFrame', function () {
 			this.incrementMana(this.mana_regen);
 
@@ -196,9 +263,7 @@ Crafty.c("PlayerManager", {
         console.log("Inserting player spell " + name + " paired with " + root_node);
         return this;		
     },
-	/*	cast - this looks up the spell in the player spell dict and initializes a Spell entity
-			
-			
+	/*	cast - this looks up the spell in the player spell dict and initializes a Spell entity			
 	*/ 
 	cast: function(spell_name, spell_arguments) {
 		var spell_info = this.player_spells[spell_name];
